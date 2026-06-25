@@ -132,8 +132,11 @@ juce::String AstroHarmonyAudioProcessor::getCustomStateBlob() const
 
 void AstroHarmonyAudioProcessor::setCustomStateBlob (const juce::String& blob)
 {
-    const juce::ScopedLock sl (customStateLock);
-    customStateBlob = blob;
+    {
+        const juce::ScopedLock sl (customStateLock);
+        customStateBlob = blob;
+    }
+    customStateBlobSerial.fetch_add (1, std::memory_order_release);
 }
 
 //==============================================================================

@@ -6,22 +6,29 @@
 #include "ParameterIDs.hpp"
 
 //==============================================================================
-// AstroHarmony Editor — Sub-phase A scaffold.
+// AstroHarmony Editor — Sub-phase C (JS<->C++ bridge).
 //
 // CRITICAL: member declaration order MUST be:
 //   1. Parameter relays           (destroyed LAST)
 //   2. WebBrowserComponent        (destroyed MIDDLE)
 //   3. Parameter attachments      (destroyed FIRST)
 //
-// Sub-phase C will add native functions (playChord, pushState, sessions, etc.)
-// and the 30 Hz Timer emit pipeline. Sub-phase A only sets up the bare WebView
-// + relays so the design phase's "placeholder visible in DAW" gate passes.
+// Sub-phase C adds:
+//   - Native functions:  requestInitialState, pushState, audio stubs,
+//                        session stubs, exportMidi stub, getBuildInfo
+//   - 30 Hz Timer push:  hostBpmChanged, playStateChanged, currentBeatChanged
+//   - Live restore:      processor::stateBlobChanged is monitored so a DAW
+//                        preset switch with the editor open re-hydrates JS.
+//
+// Audio (Sub-phase D), file-based sessions (E), host transport polish (F),
+// and MIDI export (G) layer on top of this bridge without touching it.
 //==============================================================================
-class AstroHarmonyAudioProcessorEditor : public juce::AudioProcessorEditor
+class AstroHarmonyAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                         private juce::Timer
 {
 public:
     explicit AstroHarmonyAudioProcessorEditor (AstroHarmonyAudioProcessor&);
-    ~AstroHarmonyAudioProcessorEditor() override = default;
+    ~AstroHarmonyAudioProcessorEditor() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -46,6 +53,20 @@ private:
     std::unique_ptr<juce::WebSliderParameterAttachment> loopAttachment;
 
     //==========================================================================
+    // Push-event de-dup state (so we don't spam emitEvent 30 times/sec with
+    // identical payloads — JS gets a callback only when something changes).
+    float  lastEmittedBpm        { -1.0f };
+    bool   lastEmittedIsPlaying  { false };
+    bool   firstEmitDone         { false };
+    int    lastEmittedBeatIndex  { -2 };
+    int    lastBlobSerial        { -1 };
+
+    void timerCallback() override;
+    void emitInitialBridgeState();
+    void emitStateRestored();
+
+    //==========================================================================
+    // Resource provider
     std::optional<juce::WebBrowserComponent::Resource> getResource (const juce::String& url);
     static const char* getMimeForExtension (const juce::String& extension);
     static juce::String getExtension (juce::String filename);

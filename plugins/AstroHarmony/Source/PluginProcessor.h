@@ -68,6 +68,12 @@ public:
     juce::String getCustomStateBlob() const;
     void setCustomStateBlob (const juce::String& blob);
 
+    // Monotonic counter bumped every time setCustomStateBlob() runs. The
+    // editor's 30 Hz Timer polls this and re-hydrates JS when it changes,
+    // which catches DAW preset switches that happen *while* the editor is
+    // open (setStateInformation can fire on a live editor in some hosts).
+    int getCustomStateBlobSerial() const noexcept { return customStateBlobSerial.load(); }
+
 private:
     //==========================================================================
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
@@ -81,9 +87,11 @@ private:
     std::atomic<float>* loopParam           { nullptr };
     juce::AudioParameterBool* bypassParameter { nullptr };
 
-    // Custom state blob storage (message-thread only access).
+    // Custom state blob storage. Lock protects the String; the serial is an
+    // atomic int polled by the editor without taking the lock.
     juce::String customStateBlob;
     juce::CriticalSection customStateLock;
+    std::atomic<int> customStateBlobSerial { 0 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AstroHarmonyAudioProcessor)
 };
