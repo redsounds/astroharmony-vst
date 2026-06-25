@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SimpleGain</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-bg:            #101014;
+      --color-surface:       #1A1A1F;
+      --color-surface-hl:    #292930;
+      --color-primary:       #FFC300;
+      --color-accent:        #FFC300;
+      --color-secondary:     #00FFF0;
+      --color-danger:        #FF4D4D;
+      --color-text-primary:  #F0F0F5;
+      --color-text-secondary:#A0A0A5;
+      --color-border:        #3A3A45;
+      --font-mono: 'Roboto Mono', ui-monospace, Menlo, Consolas, monospace;
+      --radius: 4px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-family: var(--font-mono);
+      width: 520px;
+      height: 260px;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .plugin {
+      position: relative;
+      width: 520px;
+      height: 260px;
+      background: var(--color-surface);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top accent stripe — amber-signal house style */
+    .plugin::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--color-primary);
+      transition: background 150ms ease;
+    }
+    .plugin.bypassed::before { background: var(--color-border); }
+
+    .header {
+      height: 44px;
+      padding: 0 16px 0 16px;
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--color-border);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .header .title { color: var(--color-text-primary); }
+
+    .bypass-toggle {
+      width: 72px;
+      height: 22px;
+      border-radius: 11px;
+      border: 1px solid var(--color-primary);
+      background: transparent;
+      color: var(--color-text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 8px;
+      transition: border-color 150ms ease, color 150ms ease;
+    }
+    .bypass-toggle .dot {
+      display: inline-block;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--color-primary);
+      transition: background 150ms ease;
+    }
+    .plugin.bypassed .bypass-toggle { border-color: var(--color-border); color: var(--color-text-secondary); }
+    .plugin.bypassed .bypass-toggle .dot { background: transparent; box-shadow: inset 0 0 0 1px var(--color-border); }
+
+    .body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .panel {
+      position: relative;
+      background: var(--color-surface-hl);
+      border-radius: var(--radius);
+      padding: 24px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .panel-label {
+      position: absolute;
+      top: 8px;
+      left: 12px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+    }
+
+    /* Knob */
+    .knob {
+      width: 80px; height: 80px;
+      cursor: ns-resize;
+      display: block;
+      filter: drop-shadow(0 0 4px rgba(255, 195, 0, 0.0));
+      transition: filter 150ms ease;
+    }
+    .knob.active { filter: drop-shadow(0 0 4px rgba(255, 195, 0, 0.4)); }
+    .knob .bg-arc {
+      fill: none;
+      stroke: var(--color-bg);
+      stroke-width: 6;
+      stroke-linecap: round;
+    }
+    .knob .value-arc {
+      fill: none;
+      stroke: var(--color-primary);
+      stroke-width: 6;
+      stroke-linecap: round;
+      transition: stroke-dasharray 60ms linear;
+    }
+    .plugin.bypassed .knob { opacity: 0.4; }
+
+    .knob-value {
+      font-size: 0.95rem;
+      color: var(--color-text-primary);
+    }
+    .knob-unit {
+      font-size: 0.65rem;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.1em;
+    }
+
+    /* Meter */
+    .meter-wrap {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      height: 110px;
+      margin-top: 4px;
+    }
+    .meter-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .meter {
+      position: relative;
+      width: 18px;
+      height: 100px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .meter-fill {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 0%;
+      background: linear-gradient(
+        to top,
+        var(--color-primary) 0%,
+        var(--color-primary) 60%,
+        #FFD84D 60%,
+        #FFD84D 80%,
+        var(--color-danger) 80%,
+        var(--color-danger) 100%
+      );
+    }
+    .meter-hold {
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: var(--color-secondary);
+      opacity: 0;
+      transition: opacity 1.5s ease;
+    }
+    .meter-hold.visible { opacity: 1; transition: opacity 0s; }
+    .plugin.bypassed .meter-fill { background: var(--color-border); }
+    .meter-label {
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--color-text-secondary);
+    }
+
+    .footer {
+      height: 32px;
+      border-top: 1px solid var(--color-border);
+      background: var(--color-bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 0.7rem;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .footer .peak { color: var(--color-text-primary); font-weight: 400; }
+    .footer .peak.over { color: var(--color-danger); font-weight: 700; }
+
+    /* Focus rings — accessibility */
+    button:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="plugin" id="plugin">
+    <div class="header">
+      <span class="title">Simple Gain</span>
+      <button class="bypass-toggle" id="bypass-toggle" aria-label="Bypass">
+        <span class="dot"></span>
+        BYPASS
+      </button>
+    </div>
+
+    <div class="body">
+      <!-- Input Gain -->
+      <div class="panel">
+        <span class="panel-label">Input</span>
+        <svg class="knob" id="input_gain-knob" viewBox="0 0 80 80" tabindex="0" role="slider"
+             aria-label="Input Gain" aria-valuemin="-60" aria-valuemax="12" aria-valuenow="0">
+          <circle class="bg-arc" cx="40" cy="40" r="32"
+                  stroke-dasharray="150.796 201.062"
+                  transform="rotate(135 40 40)" />
+          <circle class="value-arc" cx="40" cy="40" r="32"
+                  stroke-dasharray="125.66 201.062"
+                  transform="rotate(135 40 40)" />
+        </svg>
+        <span class="knob-value" id="input_gain-value">0.0</span>
+        <span class="knob-unit">dB</span>
+      </div>
+
+      <!-- Meter -->
+      <div class="panel">
+        <span class="panel-label">Level</span>
+        <div class="meter-wrap">
+          <div class="meter-col">
+            <div class="meter">
+              <div class="meter-fill" id="meter-l-fill"></div>
+              <div class="meter-hold" id="meter-l-hold"></div>
+            </div>
+            <span class="meter-label">L</span>
+          </div>
+          <div class="meter-col">
+            <div class="meter">
+              <div class="meter-fill" id="meter-r-fill"></div>
+              <div class="meter-hold" id="meter-r-hold"></div>
+            </div>
+            <span class="meter-label">R</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Output Trim -->
+      <div class="panel">
+        <span class="panel-label">Output</span>
+        <svg class="knob" id="output_trim-knob" viewBox="0 0 80 80" tabindex="0" role="slider"
+             aria-label="Output Trim" aria-valuemin="-60" aria-valuemax="12" aria-valuenow="0">
+          <circle class="bg-arc" cx="40" cy="40" r="32"
+                  stroke-dasharray="150.796 201.062"
+                  transform="rotate(135 40 40)" />
+          <circle class="value-arc" cx="40" cy="40" r="32"
+                  stroke-dasharray="125.66 201.062"
+                  transform="rotate(135 40 40)" />
+        </svg>
+        <span class="knob-value" id="output_trim-value">0.0</span>
+        <span class="knob-unit">dB</span>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="peak" id="meter-readout">PEAK: -inf dB</span>
+      <span>JUCE WEBVIEW 8</span>
+    </div>
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────────────────────
+    //  Preview-only script — drives the UI for design review.
+    //  Production /impl phase will replace this with the
+    //  JUCE WebView native-function bridge in Source/ui/public/js/index.js
+    // ─────────────────────────────────────────────────────────────
+
+    const ARC_CIRCUMFERENCE = 201.062; // 2 * PI * 32
+    const SWEEP_RATIO = 0.75; // 270° of 360°
+    const FULL_SWEEP = ARC_CIRCUMFERENCE * SWEEP_RATIO; // ~150.796
+
+    const PARAM_MIN = -60;
+    const PARAM_MAX = 12;
+    const PARAM_RANGE = PARAM_MAX - PARAM_MIN;
+
+    function setKnob(id, dB) {
+      const knob = document.getElementById(`${id}-knob`);
+      const value = document.getElementById(`${id}-value`);
+      const arc = knob.querySelector('.value-arc');
+      const clamped = Math.max(PARAM_MIN, Math.min(PARAM_MAX, dB));
+      const norm = (clamped - PARAM_MIN) / PARAM_RANGE;
+      const dash = FULL_SWEEP * norm;
+      arc.setAttribute('stroke-dasharray', `${dash.toFixed(3)} ${ARC_CIRCUMFERENCE.toFixed(3)}`);
+      value.textContent = clamped.toFixed(1);
+      knob.setAttribute('aria-valuenow', String(clamped));
+      knob.classList.toggle('active', clamped > PARAM_MIN);
+    }
+
+    function attachKnobDrag(id, initial) {
+      const knob = document.getElementById(`${id}-knob`);
+      let current = initial;
+      let dragging = false;
+      let startY = 0;
+      let startVal = 0;
+
+      setKnob(id, current);
+
+      knob.addEventListener('mousedown', (e) => {
+        dragging = true;
+        startY = e.clientY;
+        startVal = current;
+        document.body.style.cursor = 'ns-resize';
+        e.preventDefault();
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const dy = startY - e.clientY;
+        const step = e.shiftKey ? 0.05 : 0.5;
+        current = startVal + dy * step;
+        setKnob(id, current);
+      });
+      window.addEventListener('mouseup', () => {
+        if (dragging) {
+          dragging = false;
+          document.body.style.cursor = '';
+        }
+      });
+      knob.addEventListener('dblclick', () => { current = 0; setKnob(id, current); });
+      knob.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        current += e.deltaY < 0 ? 1 : -1;
+        setKnob(id, current);
+      }, { passive: false });
+    }
+
+    attachKnobDrag('input_gain', 0);
+    attachKnobDrag('output_trim', 0);
+
+    // Bypass toggle
+    const plugin = document.getElementById('plugin');
+    const bypassBtn = document.getElementById('bypass-toggle');
+    let bypassed = false;
+    bypassBtn.addEventListener('click', () => {
+      bypassed = !bypassed;
+      plugin.classList.toggle('bypassed', bypassed);
+      bypassBtn.setAttribute('aria-pressed', String(bypassed));
+    });
+
+    // ── Fake meter animation for design preview ──────────────────
+    // Drives both meters with a smoothed random walk so we can see motion.
+    const meterL = document.getElementById('meter-l-fill');
+    const meterR = document.getElementById('meter-r-fill');
+    const holdL  = document.getElementById('meter-l-hold');
+    const holdR  = document.getElementById('meter-r-hold');
+    const readout = document.getElementById('meter-readout');
+
+    let pkL = -60, pkR = -60;
+    let holdLval = -60, holdRval = -60;
+    let holdLts = 0, holdRts = 0;
+
+    function dbToPct(db) {
+      const clamped = Math.max(-60, Math.min(0, db));
+      return ((clamped + 60) / 60) * 100;
+    }
+
+    function tick(now) {
+      if (!bypassed) {
+        // Random walk in dBFS
+        pkL = Math.max(-60, Math.min(-1, pkL + (Math.random() - 0.5) * 8));
+        pkR = Math.max(-60, Math.min(-1, pkR + (Math.random() - 0.5) * 8));
+      } else {
+        pkL = pkR = -60;
+      }
+
+      meterL.style.height = dbToPct(pkL) + '%';
+      meterR.style.height = dbToPct(pkR) + '%';
+
+      // Peak hold
+      if (pkL >= holdLval) { holdLval = pkL; holdLts = now; }
+      if (pkR >= holdRval) { holdRval = pkR; holdRts = now; }
+      if (now - holdLts > 1500) holdLval = Math.max(-60, holdLval - 0.3);
+      if (now - holdRts > 1500) holdRval = Math.max(-60, holdRval - 0.3);
+      holdL.style.bottom = dbToPct(holdLval) + '%';
+      holdR.style.bottom = dbToPct(holdRval) + '%';
+      holdL.classList.toggle('visible', holdLval > -60);
+      holdR.classList.toggle('visible', holdRval > -60);
+
+      const peak = Math.max(pkL, pkR);
+      if (peak <= -60) {
+        readout.textContent = 'PEAK: -inf dB';
+        readout.classList.remove('over');
+      } else {
+        readout.textContent = `PEAK: ${peak.toFixed(1)} dB`;
+        readout.classList.toggle('over', peak > -3);
+      }
+
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

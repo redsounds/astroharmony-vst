@@ -1,0 +1,87 @@
+{
+  "plugin_name": "AstroHarmony",
+  "version": "v0.0.0",
+  "current_phase": "design_complete",
+  "ui_framework": "webview",
+  "complexity_score": 5,
+  "created_at": "2026-06-24T21:50:00Z",
+  "last_modified": "2026-06-24T22:30:00Z",
+  "phase_history": [
+    {
+      "phase": "phase_0_spike",
+      "completed_at": "2026-06-24T21:44:00Z",
+      "notes": "Pre-/dream feasibility spike (plugins/AstroHarmony_Spike/) validated all 4 high-risk technical dependencies inside FL Studio: React 19 boot, Zustand state persistence, @dnd-kit/sortable reorder, JS<->C++ native function bridge via Juce.getNativeFunction. Bundle size baseline 249 KB (Vite + vite-plugin-singlefile produces single-HTML output, bypassing the SimpleGain resource-provider footgun entirely)."
+    },
+    {
+      "phase": "ideation",
+      "completed_at": "2026-06-24T21:50:00Z",
+      "notes": "1:1 port of the AstroHarmony Electron desktop app (D:/Claude/Sessions/cinematic-composer) into VST3/Standalone instrument plugin. License gate deferred. Full feature inventory including 10-mood engine, 4 sampled instruments (Salamander Piano + Flute + Strings + Trumpet via embedded mp3 BinaryData), host-transport sync, MIDI export, file-based session library at %APPDATA%/AstroHarmony/sessions/."
+    },
+    {
+      "phase": "plan_complete",
+      "completed_at": "2026-06-24T22:05:00Z",
+      "framework_selected": "webview",
+      "notes": "Architecture: VST3 Instrument, JUCE Synthesiser with mid-flight Sampler swap, juce::dsp::Reverb, host-sync scheduler via AudioPlayHead. Implementation: 7 phased sub-phases A-G with user-verification gate per phase. Total estimate 14-18 days work, 3-4 weeks calendar. Highest remaining risk: Sub-phase D (Sampler audio quality vs Tone.Sampler) — early A/B test planned."
+    },
+    {
+      "phase": "design_complete",
+      "completed_at": "2026-06-24T22:30:00Z",
+      "notes": "v1-ui-spec.md + v1-style-guide.md + v1-test.html created. Window 1280x800 default (resizable 960x700-1920x1200), cc-dark theme from globals.css :root --cc-* tokens, 4-column CSS grid mirroring WriteWorkspaceV2.tsx exactly: 230px MoodSidebar | flexible main | 5px drag-divider | 450px resizable RightPanel. v1-test.html is a static wireframe ONLY — production HTML comes from Vite/React bundle in /impl Sub-phase B."
+    },
+    {
+      "phase": "impl_sub_a_complete",
+      "completed_at": "2026-06-24T22:41:00Z",
+      "notes": "Plugin skeleton built and verified in FL Studio. 5.6 MB DLL. APVTS with 5 params (tempo, master_volume, pitch_transpose, loop, bypass). WebView2 loads placeholder card with cc-dark theme. JUCE backend bridge detected. Both validators (setup + member-order) green; setup validator flagged false positives for the single-file Vite architecture which were documented (no separate js/index.js, BinaryData accessed via constant form not getNamedResource())."
+    },
+    {
+      "phase": "impl_sub_b_complete",
+      "completed_at": "2026-06-25T13:05:00Z",
+      "notes": "Full Vite + React 19 port of all 14 cinematic-composer v2 components. 1.0 MB single-file HTML bundle (vite-plugin-singlefile), 6.6 MB plugin DLL. Side-by-side parity with Electron app verified by user. 3 bugs found and fixed: B.6 (suggest +) + B.7 (voicing-style hang) both caused by stubbed Tone.js await hanging in useChordPreview; fix was to strip Tone.js entirely from audio.ts (Sub-phase D will wire C++ audio through callNative). B.8 (mood→voicing not auto-applying) caused by source's require('@/lib/moodEngine') CommonJS workaround silently failing in Vite ES modules — fix was static import + remove try/catch. No audio at this stage — Sub-phase D adds it."
+    }
+  ],
+  "validation": {
+    "creative_brief_exists": true,
+    "parameter_spec_exists": true,
+    "architecture_defined": true,
+    "ui_framework_selected": true,
+    "design_complete": true,
+    "code_complete": false,
+    "tests_passed": false,
+    "ship_ready": false
+  },
+  "framework_selection": {
+    "decision": "webview",
+    "rationale": "Decided pre-/dream based on Phase 0 spike results. Vite + React 19 + Zustand + @dnd-kit + JUCE 8 WebView2 stack proven end-to-end in FL Studio. Single-file bundle via vite-plugin-singlefile sidesteps resource-provider path collision issues (the bug we hit in SimpleGain). React lets us reuse the ~2,200 lines of v2 components from cinematic-composer with minimal modification.",
+    "implementation_strategy": "phased"
+  },
+  "source_reference": {
+    "repo": "D:/Claude/Sessions/cinematic-composer",
+    "policy": "READ-ONLY — never modify",
+    "modules_ported_as_is": [
+      "lib/theory.ts",
+      "lib/voicings.ts",
+      "lib/moodEngine/**",
+      "lib/midi.ts",
+      "types/music.ts",
+      "components/v2/**"
+    ],
+    "modules_replaced": {
+      "lib/audio.ts": "Tone.Sampler -> JUCE Synthesiser + Sampler voices (C++)",
+      "lib/store.ts session persistence": "localStorage -> file-based at %APPDATA%/AstroHarmony/sessions/",
+      "components/v2/LicenseGate.tsx": "Deferred to v1.1 per user decision"
+    },
+    "samples_embedded_from": "cinematic-composer/public/samples/ (~3 MB across 4 instruments)"
+  },
+  "phase_0_spike": {
+    "plugin_path": "plugins/AstroHarmony_Spike",
+    "installed_vst3": "C:/Program Files/Common Files/VST3/AstroHarmony Spike.vst3",
+    "build_artifact": "build/plugins/AstroHarmony_Spike/AstroHarmony_Spike_artefacts/Release/VST3/",
+    "ui_template": "_tools/astroharmony-ui-spike/",
+    "purpose": "Keep as reference for the production /impl phase wiring. Can be removed after AstroHarmony v1 ships."
+  },
+  "error_recovery": {
+    "last_backup": null,
+    "rollback_available": false,
+    "error_log": []
+  }
+}

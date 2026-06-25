@@ -53,3 +53,9 @@ cloudwash_crash_log.txt
 # Backups
 _backups/
 dist/
+
+# Node / Vite — UI workspaces under _tools/
+node_modules/
+*.tsbuildinfo
+.vite/
+.eslintcache

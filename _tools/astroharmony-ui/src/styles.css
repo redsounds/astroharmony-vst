@@ -1,0 +1,107 @@
+/* Ported 1:1 from cinematic-composer/app/globals.css.
+   :root --cc-* tokens are the cc-dark theme (the running app's actual look).
+   Inline-style components reference these via var(...). */
+
+:root {
+  /* --cc-* tokens (cc-dark theme) */
+  --cc-bg-deep:     #0a0a14;
+  --cc-bg-base:     #0f0f1c;
+  --cc-bg-panel:    #14152a;
+  --cc-bg-elev:     #1d1f3a;
+  --cc-bg-input:    #11122a;
+  --cc-border:      #2a2d4a;
+  --cc-border-soft: #1f2138;
+  --cc-text:        #e7e6f5;
+  --cc-text-dim:    #9b9ab8;
+  --cc-text-mute:   #5e5e80;
+  --cc-accent:      #8b7dd9;
+  --cc-accent-d:    #6d5cc4;
+  --cc-accent-l:    #a094e3;
+  --cc-cyan:        #7fa8b8;
+  --cc-cyan-d:      #5a8893;
+  --cc-warn:        #d97757;
+  --cc-emotional:   #c668b8;
+  --cc-resolution:  #5ec577;
+  --cc-card-1: #c44a8e;
+  --cc-card-2: #4a6dc4;
+  --cc-card-3: #4aa8c4;
+  --cc-card-4: #c4914a;
+  --cc-card-5: #c44a4a;
+  --cc-card-6: #7a4ac4;
+
+  /* Legacy @theme tokens (cream theme) — kept in case any component still references them */
+  --color-bg: #f5efe7;
+  --color-surface: #ffffff;
+  --color-text: #2d2438;
+  --color-muted: #7a7280;
+  --color-border: #e5dccf;
+  --color-pink: #f4a8b8;
+  --color-pink-d: #e687a0;
+  --color-cyan: #7fa8b8;
+  --color-cyan-d: #5a8893;
+  --color-purple: #6b5b8a;
+  --color-purple-d: #574a72;
+  --color-purple-l: #8a7baa;
+  --color-dark: #2a1f3d;
+
+  /* Font CSS vars (cinematic-composer sets these via next/font; we set them
+     directly from the @fontsource packages imported in main.tsx) */
+  --font-fraunces: 'Fraunces', Georgia, serif;
+  --font-dm-sans:  'DM Sans', system-ui, sans-serif;
+  --font-serif: var(--font-fraunces);
+  --font-sans:  var(--font-dm-sans);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; }
+body {
+  background: var(--cc-bg-deep);
+  color: var(--cc-text);
+  font-family: var(--font-dm-sans), 'DM Sans', system-ui, sans-serif;
+  /* Treat the plugin as always-dark — the AstroHarmony desktop app's
+     WriteWorkspaceV2 sets body.cc-dark at mount; that toggle is moot here. */
+}
+body.cc-dark { background: var(--cc-bg-deep); color: var(--cc-text); }
+
+.font-serif { font-family: var(--font-fraunces), 'Fraunces', serif; }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--cc-border);
+  border-radius: 99px;
+  outline: none;
+  width: 95px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--cc-accent);
+  border-radius: 99px;
+  cursor: pointer;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.2s ease-out; }
+
+/* Scrollbar — dark theme */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--cc-border); border-radius: 99px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--cc-accent); }
+
+/* Hide native horizontal scrollbar on chord track scroll area */
+.cc-track-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.cc-track-scroll::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
+
+/* Suppress the WebView's right-click browser context menu for production feel.
+   Plugins shouldn't surface Back/Refresh/Save as/Print menus to users. */
+body { user-select: none; -webkit-user-select: none; }
+input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
