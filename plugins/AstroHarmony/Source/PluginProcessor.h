@@ -1,7 +1,11 @@
 #pragma once
 
 #include <atomic>
+#include <memory>
 #include <juce_audio_processors/juce_audio_processors.h>
+
+class SamplerEngine;
+class Scheduler;
 
 //==============================================================================
 // AstroHarmony — Sub-phase A (skeleton).
@@ -15,7 +19,7 @@ class AstroHarmonyAudioProcessor : public juce::AudioProcessor
 {
 public:
     AstroHarmonyAudioProcessor();
-    ~AstroHarmonyAudioProcessor() override = default;
+    ~AstroHarmonyAudioProcessor() override;
 
     //==========================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -74,6 +78,13 @@ public:
     // open (setStateInformation can fire on a live editor in some hosts).
     int getCustomStateBlobSerial() const noexcept { return customStateBlobSerial.load(); }
 
+    //==========================================================================
+    // Sub-phase D — audio engine handles (created in ctor, prepared in
+    // prepareToPlay). PluginEditor pulls these to wire its native functions
+    // (playChord, playProgression, stopAll, setInstrument).
+    SamplerEngine& getSamplerEngine() noexcept { return *samplerEngine; }
+    Scheduler&     getScheduler()     noexcept { return *scheduler; }
+
 private:
     //==========================================================================
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
@@ -92,6 +103,11 @@ private:
     juce::String customStateBlob;
     juce::CriticalSection customStateLock;
     std::atomic<int> customStateBlobSerial { 0 };
+
+    // Sub-phase D audio engine. Held by unique_ptr so the .h can forward-
+    // declare the implementation classes (keeps the header lightweight).
+    std::unique_ptr<SamplerEngine> samplerEngine;
+    std::unique_ptr<Scheduler>     scheduler;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AstroHarmonyAudioProcessor)
 };

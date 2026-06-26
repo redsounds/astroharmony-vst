@@ -2,9 +2,12 @@
 #include "PluginProcessor.h"
 #include "BinaryData.h"
 #include "ParameterIDs.hpp"
+#include "audio/SamplerEngine.h"
+#include "audio/Scheduler.h"
 
 #include <cstring>
 #include <unordered_map>
+#include <vector>
 
 namespace
 {
@@ -24,6 +27,54 @@ namespace
             { "success", false },
             { "error",   juce::var (message) },
         });
+    }
+
+    // Parse note strings used by the UI ("C4", "Eb3", "F#5", "Bb2") into
+    // MIDI numbers. Sharp-letter spellings are produced by lib/theory.ts /
+    // lib/voicings.ts. We accept both "#" and "s" + both "b" flat spellings.
+    int midiFromNoteString (const juce::String& note)
+    {
+        if (note.isEmpty()) return 60;
+
+        int idx = 0;
+        const auto letter = juce::CharacterFunctions::toUpperCase (note[idx++]);
+        int semis = 0;
+        switch (letter)
+        {
+            case 'C': semis = 0;  break;
+            case 'D': semis = 2;  break;
+            case 'E': semis = 4;  break;
+            case 'F': semis = 5;  break;
+            case 'G': semis = 7;  break;
+            case 'A': semis = 9;  break;
+            case 'B': semis = 11; break;
+            default: return 60;
+        }
+
+        // Accidental
+        if (idx < note.length())
+        {
+            const auto c = note[idx];
+            if (c == '#' || c == 's' || c == 'S') { semis += 1; ++idx; }
+            else if (c == 'b' || c == 'B')        { semis -= 1; ++idx; }
+        }
+
+        if (idx >= note.length()) return 60;
+        const int octave = note.substring (idx).getIntValue();
+        return juce::jlimit (0, 127, (octave + 1) * 12 + semis);
+    }
+
+    std::vector<int> midiFromVarArray (const juce::var& v, int transposeSemis)
+    {
+        std::vector<int> out;
+        if (! v.isArray()) return out;
+        if (auto* arr = v.getArray())
+        {
+            out.reserve ((size_t) arr->size());
+            for (const auto& el : *arr)
+                out.push_back (juce::jlimit (0, 127, midiFromNoteString (el.toString()) + transposeSemis));
+        }
+        return out;
     }
 }
 
@@ -77,32 +128,134 @@ AstroHarmonyAudioProcessorEditor::AstroHarmonyAudioProcessorEditor (AstroHarmony
         complete (juce::var (true));
     };
 
-    // ----- Audio control (real impls in Sub-phase D) -----
-    auto playChord = [] (const juce::Array<juce::var>& /*args*/,
-                         NativeFnCompletion complete)
-    {
-        // Sub-phase D: trigger one-shot chord through Synthesiser.
-        complete (juce::var (true));
-    };
-
-    auto playProgression = [] (const juce::Array<juce::var>& /*args*/,
-                               NativeFnCompletion complete)
-    {
-        // Sub-phase D: start scheduler.
-        complete (juce::var (true));
-    };
-
-    auto stopAll = [] (const juce::Array<juce::var>& /*args*/,
-                       NativeFnCompletion complete)
-    {
-        // Sub-phase D: stop scheduler, release all voices.
-        complete (juce::var (true));
-    };
-
-    auto setInstrument = [] (const juce::Array<juce::var>& /*args*/,
+    // ----- Audio control -----
+    auto playChord = [this] (const juce::Array<juce::var>& args,
                              NativeFnCompletion complete)
     {
-        // Sub-phase D: swap active sampler sound set.
+        // args: [ notes: string[], inversion?, drop2?, voicingType? ]
+        // The JS side has already applied voicing — we only need the note
+        // strings. Transpose is read from APVTS so DAW automation flows.
+        const int transpose = (int) std::lround (
+            audioProcessor.getAPVTS().getRawParameterValue (ParameterIDs::PITCH_TRANSPOSE)->load());
+
+        auto notes = args.size() >= 1 ? midiFromVarArray (args[0], transpose) : std::vector<int>{};
+        if (! notes.empty())
+        {
+            // Exclusive playback: explicitly release the previous chord
+            // before starting the new one. The release envelope (~120 ms,
+            // see SamplerEngine::envelopeFor) fades the old chord smoothly
+            // so the cutoff doesn't click.
+            //
+            // 800 ms auto-release on the new chord — without it, sustained
+            // instruments (and the natural piano decay) ring for the full
+            // sample length (5-10 s) which feels droning for chord-by-chord
+            // preview. With the 120 ms release tail layered on top, the
+            // perceived total is ~900 ms — fast enough to feel responsive
+            // when auditioning chords, slow enough that the chord registers.
+            audioProcessor.getSamplerEngine().stopAll();
+            audioProcessor.getSamplerEngine().playChord (notes, 0.85f, 800);
+        }
+        complete (juce::var (true));
+    };
+
+    auto playProgression = [this] (const juce::Array<juce::var>& args,
+                                   NativeFnCompletion complete)
+    {
+        // args: [ progression: ChordEntry[], loop: bool ]
+        // ChordEntry: { notes: string[], bars: number, ... }
+        const int transpose = (int) std::lround (
+            audioProcessor.getAPVTS().getRawParameterValue (ParameterIDs::PITCH_TRANSPOSE)->load());
+
+        std::vector<Scheduler::ChordEntry> chords;
+        if (args.size() >= 1 && args[0].isArray())
+        {
+            if (auto* arr = args[0].getArray())
+            {
+                chords.reserve ((size_t) arr->size());
+                for (const auto& entry : *arr)
+                {
+                    Scheduler::ChordEntry c;
+                    const auto notesVar = entry.getProperty ("notes", juce::var());
+                    c.midiNotes = midiFromVarArray (notesVar, transpose);
+                    const auto barsVar = entry.getProperty ("bars", juce::var (1.0));
+                    c.bars = (float) (double) barsVar;
+                    if (! c.midiNotes.empty())
+                        chords.push_back (std::move (c));
+                }
+            }
+        }
+
+        const bool loop = args.size() >= 2 && bool (args[1]);
+
+        auto& scheduler = audioProcessor.getScheduler();
+        scheduler.stop();
+        scheduler.setProgression (std::move (chords));
+        scheduler.setLooping (loop);
+        scheduler.start();
+        complete (juce::var (true));
+    };
+
+    auto stopAll = [this] (const juce::Array<juce::var>& /*args*/,
+                           NativeFnCompletion complete)
+    {
+        audioProcessor.getScheduler().stop();
+        audioProcessor.getSamplerEngine().stopAll();
+        complete (juce::var (true));
+    };
+
+    auto setInstrument = [this] (const juce::Array<juce::var>& args,
+                                 NativeFnCompletion complete)
+    {
+        if (args.size() >= 1)
+        {
+            const auto id = args[0].toString();
+            audioProcessor.getSamplerEngine().stopAll();
+            audioProcessor.getSamplerEngine().setActiveInstrument (id);
+        }
+        complete (juce::var (true));
+    };
+
+    // ----- APVTS pokes from the UI (so DAW automation flows both ways) -----
+    // The UI sliders haven't been migrated to JUCE's getSliderState yet — for
+    // now JS calls these tiny native fns when a host-automatable value
+    // changes, and we write the value into APVTS via setValueNotifyingHost.
+    // The audio engine reads APVTS directly so DAW automation also works.
+    // (Sub-phase G can switch the UI sliders to direct relay binding for
+    // bidirectional DAW->UI updates.)
+    auto pokeParam = [this] (const juce::String& paramId, float scaledValue)
+    {
+        if (auto* p = audioProcessor.getAPVTS().getParameter (paramId))
+        {
+            const auto& range = audioProcessor.getAPVTS().getParameterRange (paramId);
+            p->setValueNotifyingHost (range.convertTo0to1 (scaledValue));
+        }
+    };
+
+    auto setTempoBpm = [this, pokeParam] (const juce::Array<juce::var>& args,
+                                          NativeFnCompletion complete)
+    {
+        if (args.size() >= 1) pokeParam (ParameterIDs::TEMPO, (float) (double) args[0]);
+        complete (juce::var (true));
+    };
+
+    auto setMasterVolumePercent = [this, pokeParam] (const juce::Array<juce::var>& args,
+                                                     NativeFnCompletion complete)
+    {
+        if (args.size() >= 1) pokeParam (ParameterIDs::MASTER_VOLUME, (float) (double) args[0]);
+        complete (juce::var (true));
+    };
+
+    auto setTransposeSemis = [this, pokeParam] (const juce::Array<juce::var>& args,
+                                                NativeFnCompletion complete)
+    {
+        if (args.size() >= 1) pokeParam (ParameterIDs::PITCH_TRANSPOSE, (float) (double) args[0]);
+        complete (juce::var (true));
+    };
+
+    auto setLoopEnabled = [this, pokeParam] (const juce::Array<juce::var>& args,
+                                             NativeFnCompletion complete)
+    {
+        if (args.size() >= 1) pokeParam (ParameterIDs::LOOP, bool (args[0]) ? 1.0f : 0.0f);
         complete (juce::var (true));
     };
 
@@ -184,6 +337,10 @@ AstroHarmonyAudioProcessorEditor::AstroHarmonyAudioProcessorEditor (AstroHarmony
             .withNativeFunction ("playProgression",      std::move (playProgression))
             .withNativeFunction ("stopAll",              std::move (stopAll))
             .withNativeFunction ("setInstrument",        std::move (setInstrument))
+            .withNativeFunction ("setTempoBpm",          std::move (setTempoBpm))
+            .withNativeFunction ("setMasterVolumePercent", std::move (setMasterVolumePercent))
+            .withNativeFunction ("setTransposeSemis",    std::move (setTransposeSemis))
+            .withNativeFunction ("setLoopEnabled",       std::move (setLoopEnabled))
             .withNativeFunction ("listSessions",         std::move (listSessions))
             .withNativeFunction ("loadSession",          std::move (loadSession))
             .withNativeFunction ("saveCurrentSession",   std::move (saveCurrentSession))
@@ -288,6 +445,24 @@ void AstroHarmonyAudioProcessorEditor::timerCallback()
     }
 
     firstEmitDone = true;
+
+    // Every ~2s dump audio-thread counters to AstroHarmony.log so we can
+    // see if the SamplerEngine is actually rendering audio.
+    if (++diagDumpCounter >= 60)
+    {
+        diagDumpCounter = 0;
+        auto& eng = audioProcessor.getSamplerEngine();
+        auto path = juce::File::getSpecialLocation (juce::File::tempDirectory)
+                        .getChildFile ("AstroHarmony.log");
+        const juce::String line =
+              juce::Time::getCurrentTime().toString (true, true, true, true)
+            + " | [AudioStats] activeInstr=" + eng.getActiveInstrumentId()
+            + " blocks=" + juce::String (eng.blocksProcessed.load())
+            + " blocksWithAudio=" + juce::String (eng.blocksWithAudio.load())
+            + " peak=" + juce::String (eng.lastBlockPeak.load(), 4)
+            + " noteOns=" + juce::String (eng.noteOnsThisSession.load()) + "\n";
+        path.appendText (line);
+    }
 }
 
 //==============================================================================

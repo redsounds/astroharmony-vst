@@ -1,11 +1,11 @@
 {
   "plugin_name": "AstroHarmony",
   "version": "v0.0.0",
-  "current_phase": "impl_sub_c_complete",
+  "current_phase": "impl_sub_d_complete",
   "ui_framework": "webview",
   "complexity_score": 5,
   "created_at": "2026-06-24T21:50:00Z",
-  "last_modified": "2026-06-25T15:45:00Z",
+  "last_modified": "2026-06-25T21:55:00Z",
   "phase_history": [
     {
       "phase": "phase_0_spike",
@@ -37,6 +37,11 @@
       "phase": "impl_sub_b_complete",
       "completed_at": "2026-06-25T13:05:00Z",
       "notes": "Full Vite + React 19 port of all 14 cinematic-composer v2 components. 1.0 MB single-file HTML bundle (vite-plugin-singlefile), 6.6 MB plugin DLL. Side-by-side parity with Electron app verified by user. 3 bugs found and fixed: B.6 (suggest +) + B.7 (voicing-style hang) both caused by stubbed Tone.js await hanging in useChordPreview; fix was to strip Tone.js entirely from audio.ts (Sub-phase D will wire C++ audio through callNative). B.8 (mood→voicing not auto-applying) caused by source's require('@/lib/moodEngine') CommonJS workaround silently failing in Vite ES modules — fix was static import + remove try/catch. No audio at this stage — Sub-phase D adds it."
+    },
+    {
+      "phase": "impl_sub_d_complete",
+      "completed_at": "2026-06-25T21:55:00Z",
+      "notes": "Audio engine live. SampleLibrary lazy-decodes 60 mp3s (Salamander Piano + Flute + VSCO Strings + Trumpet) via juce::MP3AudioFormat from a second binary_data target (NAMESPACE Samples). SamplerEngine: 32-voice juce::Synthesiser with juce::SamplerSound (built via in-memory WAV roundtrip — the only path JUCE 8's SamplerSound exposes), juce::dsp::Reverb (roomSize 0.45 / damping 0.55 / wet 0.14 matching Tone.js source), per-instrument linear gain (strings +16 dB vs piano matching cinematic-composer/lib/instruments.ts), envelope tuned per instrument (attack 10-40 ms, release 80-150 ms). Scheduler advances chord-by-chord on a sample counter, looping optional. JS audio.ts ported to callNative('playChord'|'playProgression'|'stopAll'|'setInstrument'). 4 small native fns (setTempoBpm, setMasterVolumePercent, setTransposeSemis, setLoopEnabled) write APVTS so DAW automation flows both ways. Sub-phase D bugs found + fixed: D.7 BinaryData lookup uses mangled C++ symbol name (piano_C4_mp3) not original filename (piano_C4.mp3); D.7 use-after-free in WAV roundtrip (MemoryOutputStream was stack-allocated, AudioFormatWriter dtor delete'd it); D.8 manual force-stop of same-note voices was redundant with JUCE Synthesiser's built-in behaviour and silenced fresh voices early; D.8 voice stealing on rapid chord retrigger was the real click source — fixed by bumping polyphony 8→32; D.8 auto-release callbacks from old chord killed new chord's freshly-retriggered notes — fixed by generation-counter guard on the Timer callback. User-verified: chord previews audible, instrument switching works, progression playback works, volume balance correct across instruments, rapid same-chord clicks don't click and don't truncate."
     },
     {
       "phase": "impl_sub_c_complete",

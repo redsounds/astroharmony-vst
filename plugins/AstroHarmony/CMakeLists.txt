@@ -30,6 +30,22 @@ juce_add_binary_data(AstroHarmony_WebUI
 )
 
 # ============================================
+# BINARY DATA (Sampled instrument library — Sub-phase D)
+# ============================================
+# 60 mp3 files (~3 MB), one per sampled note across 4 instruments. Filenames
+# are <instrument>_<note>.mp3 (e.g. piano_C4.mp3, flute_Gs6.mp3) so the
+# BinaryData symbols stay collision-free across instruments and we can look
+# them up at runtime via Samples::getNamedResource("piano_C4.mp3", size).
+file(GLOB ASTROHARMONY_SAMPLE_FILES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/Samples/*.mp3")
+
+juce_add_binary_data(AstroHarmony_Samples
+    NAMESPACE Samples
+    HEADER_NAME SamplesData.h
+    SOURCES ${ASTROHARMONY_SAMPLE_FILES}
+)
+
+# ============================================
 # PLUGIN DEFINITION — VST3 Instrument
 # ============================================
 juce_add_plugin(AstroHarmony
@@ -52,6 +68,9 @@ target_sources(AstroHarmony
     PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
+        Source/audio/SampleLibrary.cpp
+        Source/audio/SamplerEngine.cpp
+        Source/audio/Scheduler.cpp
 )
 
 target_include_directories(AstroHarmony
@@ -65,6 +84,7 @@ target_include_directories(AstroHarmony
 target_link_libraries(AstroHarmony
     PRIVATE
         AstroHarmony_WebUI
+        AstroHarmony_Samples
         juce::juce_audio_basics
         juce::juce_audio_devices
         juce::juce_audio_formats
@@ -91,6 +111,7 @@ target_compile_definitions(AstroHarmony
     PUBLIC
         JUCE_WEB_BROWSER=1
         JUCE_VST3_CAN_REPLACE_VST2=0
+        JUCE_USE_MP3AUDIOFORMAT=1
         _USE_MATH_DEFINES=1
 )
 

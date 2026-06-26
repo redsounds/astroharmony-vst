@@ -282,7 +282,10 @@ export const useStore = create<AppState>((set, get) => ({
   setInversion: (inversion) => set({ inversion }),
   toggleDrop2: () => set((s) => ({ drop2: !s.drop2 })),
   setBassNote: (bassNote) => set({ bassNote }),
-  setTempo: (tempo) => set({ tempo }),
+  setTempo: (tempo) => {
+    set({ tempo })
+    import('./audio').then(m => m.setTempo(tempo)).catch(() => {})
+  },
   setTranspose: (semis) => {
     const clamped = Math.max(-12, Math.min(12, Math.round(semis)))
     set({ transpose: clamped })
@@ -295,7 +298,11 @@ export const useStore = create<AppState>((set, get) => ({
     set({ playbackVolume: clamped })
     import('./audio').then(m => m.setMasterVolume(clamped)).catch(() => {})
   },
-  toggleLoop: () => set((s) => ({ loop: !s.loop })),
+  toggleLoop: () => set((s) => {
+    const loop = !s.loop
+    import('./audio').then(m => m.setLoop(loop)).catch(() => {})
+    return { loop }
+  }),
   setPlaying: (isPlaying) => set({ isPlaying }),
   setCurrentBeat: (currentBeat) => set({ currentBeat }),
   setSelectedIndex: (selectedIndex) => set((s) => {

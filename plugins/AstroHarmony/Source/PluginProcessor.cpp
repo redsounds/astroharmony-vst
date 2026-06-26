@@ -1,6 +1,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "ParameterIDs.hpp"
+#include "audio/SamplerEngine.h"
+#include "audio/Scheduler.h"
 
 //==============================================================================
 AstroHarmonyAudioProcessor::AstroHarmonyAudioProcessor()
@@ -14,7 +16,20 @@ AstroHarmonyAudioProcessor::AstroHarmonyAudioProcessor()
     loopParam           = apvts.getRawParameterValue (ParameterIDs::LOOP);
     bypassParameter     = dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParameterIDs::BYPASS));
     jassert (bypassParameter != nullptr);
+
+    {
+        auto path = juce::File::getSpecialLocation (juce::File::tempDirectory)
+                        .getChildFile ("AstroHarmony.log");
+        path.appendText (juce::Time::getCurrentTime().toString (true, true, true, true)
+                         + " | === Processor ctor ===\n");
+    }
+
+    samplerEngine = std::make_unique<SamplerEngine>();
+    scheduler     = std::make_unique<Scheduler> (*samplerEngine);
+    samplerEngine->setActiveInstrument ("piano");
 }
+
+AstroHarmonyAudioProcessor::~AstroHarmonyAudioProcessor() = default;
 
 //==============================================================================
 juce::AudioProcessorValueTreeState::ParameterLayout
@@ -65,17 +80,24 @@ AstroHarmonyAudioProcessor::createParameterLayout()
 }
 
 //==============================================================================
-void AstroHarmonyAudioProcessor::prepareToPlay (double /*sampleRate*/, int /*samplesPerBlock*/)
+void AstroHarmonyAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Sub-phase A: nothing to prepare. Synthesiser/Reverb come in Sub-phase D.
     hostBpm.store (0.0f);
     hostIsPlaying.store (false);
     hostPpqPosition.store (0.0);
     currentBeatIndex.store (-1);
+
+    const int numOut = juce::jmax (1, getTotalNumOutputChannels());
+    if (samplerEngine != nullptr)
+        samplerEngine->prepare (sampleRate, samplesPerBlock, numOut);
+    if (scheduler != nullptr)
+        scheduler->prepare (sampleRate);
 }
 
 void AstroHarmonyAudioProcessor::releaseResources()
 {
+    if (samplerEngine != nullptr) samplerEngine->releaseResources();
+    if (scheduler != nullptr)     scheduler->stop();
 }
 
 bool AstroHarmonyAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -95,12 +117,10 @@ void AstroHarmonyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     if (numSamples == 0)
         return;
 
-    // No DSP yet — output silence. Clear all output channels.
+    // Synth path is a pure generator — start from silence every block.
     buffer.clear();
 
-    // Read host transport for the editor's Timer to surface (Sub-phase C wires
-    // the actual JS event, but the atomics are populated from day one so the
-    // path is exercised).
+    // Host transport snapshot.
     if (auto* playHead = getPlayHead())
     {
         if (auto pos = playHead->getPosition())
@@ -113,6 +133,32 @@ void AstroHarmonyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             if (auto ppq = pos->getPpqPosition())
                 hostPpqPosition.store (*ppq);
         }
+    }
+
+    // Scheduler ticks first — it may emit noteOn/noteOff that we want this
+    // block to render. The synth then fills the buffer; the engine applies
+    // reverb + master gain on top.
+    if (scheduler != nullptr)
+    {
+        // Mirror the tempo from APVTS so DAW automation of the tempo
+        // parameter reaches the scheduler without an extra round-trip.
+        if (tempoParam != nullptr)
+            scheduler->setTempoBpm (tempoParam->load());
+        if (loopParam != nullptr)
+            scheduler->setLooping (loopParam->load() >= 0.5f);
+
+        scheduler->tick (numSamples);
+
+        // Surface the scheduler's active chord index so the editor Timer
+        // can emit currentBeatChanged.
+        currentBeatIndex.store (scheduler->getCurrentChordIndex(), std::memory_order_release);
+    }
+
+    if (samplerEngine != nullptr)
+    {
+        const float vol   = masterVolumeParam   != nullptr ? masterVolumeParam->load()   : 80.0f;
+        const float trans = pitchTransposeParam != nullptr ? pitchTransposeParam->load() : 0.0f;
+        samplerEngine->process (buffer, vol, trans);
     }
 }
 

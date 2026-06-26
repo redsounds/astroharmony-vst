@@ -1,15 +1,19 @@
 // AstroHarmony — plugin audio shim.
 //
 // In the Electron app this file wraps Tone.js Samplers and routes chord
-// playback through Web Audio. Inside the JUCE plugin, real audio happens
-// C++-side (Sub-phase D wires juce::Synthesiser through the native function
-// bridge). For Sub-phase B we KEEP all pure voicing helpers identical to the
-// source — they're consumed by useChordPreview, RightPanel piano viz, MIDI
-// export, etc. — and STUB the audio functions so the UI doesn't await a
-// Tone.start() that hangs on missing sample files.
+// playback through Web Audio. Inside the JUCE plugin (Sub-phase D), audio
+// happens C++-side: every operation here forwards to callNative('...', ...),
+// which the PluginEditor's withNativeFunction handlers route into the
+// SamplerEngine + Scheduler.
+//
+// The pure voicing helpers (voiceChord, getVoicedNotes, applyDrop2, etc.)
+// stay identical to the Electron source — they're consumed synchronously by
+// useChordPreview, RightPanel piano viz, MIDI export, store.setPianoView,
+// and so on.
 
 import type { ChordEntry, Inversion, VoicingType } from '@/types/music'
 import { voicePerStyle } from '@/lib/voicings'
+import { callNative, inJuce } from '@/jucebridge'
 
 // ─── Pure helpers (identical to source) ──────────────────────────────────
 const CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -170,36 +174,84 @@ function ensureBassLowest(voiced: string[], bassNote: string): string[] {
 let playbackTranspose = 0
 export function setPlaybackTranspose(semis: number): void {
   playbackTranspose = Math.max(-24, Math.min(24, Math.round(semis)))
+  if (inJuce()) { void callNative('setTransposeSemis', playbackTranspose) }
 }
 export function getPlaybackTranspose(): number { return playbackTranspose }
 
-// ─── Audio operations — stubbed for Sub-phase B ──────────────────────────
-// Sub-phase D wires these to the C++ JUCE Synthesiser via
-// jucebridge.callNative("playChord", ...) etc. For now they're no-ops so
-// the UI never blocks on a Tone.start() that can't complete inside the
-// plugin (no /samples/ resource provider yet, no AudioContext gesture
-// guarantee inside WebView2).
+// ─── Audio operations — Sub-phase D: native bridge ───────────────────────
+// In a plain browser (no JUCE backend) these are no-ops — useful for
+// component dev outside the plugin DLL. Inside FL Studio, every call lands
+// on a withNativeFunction handler in PluginEditor and drives the C++
+// SamplerEngine / Scheduler.
 
-export async function initAudio(): Promise<void> { /* no-op */ }
-export async function setActiveInstrument(_id: string): Promise<void> { /* no-op */ }
-export async function setMasterVolume(_percent: number): Promise<void> { /* no-op */ }
+export async function initAudio(): Promise<void> { /* no-op — C++ is always live */ }
+
+export async function setActiveInstrument(id: string): Promise<void> {
+  if (inJuce()) { void callNative('setInstrument', id) }
+}
+
+export async function setMasterVolume(percent: number): Promise<void> {
+  if (inJuce()) { void callNative('setMasterVolumePercent', percent) }
+}
+
+export async function setTempo(bpm: number): Promise<void> {
+  if (inJuce()) { void callNative('setTempoBpm', bpm) }
+}
+
+export async function setLoop(enabled: boolean): Promise<void> {
+  if (inJuce()) { void callNative('setLoopEnabled', enabled) }
+}
 
 export async function playChord(
-  _notes: string[],
+  notes: string[],
   _duration: string | number = '4n',
-  _inversion: Inversion = 'root',
-  _bassNote: string | null = null,
-  _drop2 = false,
-  _voicingType: VoicingType = 'standard',
-  _variant: number = 0,
-): Promise<void> { /* no-op — Sub-phase D will route through callNative('playChord', ...) */ }
+  inversion: Inversion = 'root',
+  bassNote: string | null = null,
+  drop2 = false,
+  voicingType: VoicingType = 'standard',
+  variant: number = 0,
+): Promise<void> {
+  if (!inJuce()) return
+  // Apply voicing JS-side (the C++ side doesn't know about voicing rules,
+  // it just plays whatever midi notes we pass). This keeps the audio path
+  // identical between preview clicks, RightPanel taps, and Scheduler
+  // playback — Sub-phase D's design choice.
+  const voiced = getVoicedNotes(notes, inversion, drop2, bassNote, voicingType, variant)
+  const stripped = voiced.length > 0 ? voiced : notes
+  void callNative('playChord', stripped, inversion, drop2, voicingType)
+}
 
 export async function playProgression(
-  _chords: ChordEntry[],
-  _tempo: number,
-  _loop: boolean,
-  _onBeat: (beat: number) => void,
-  _onStop: () => void,
-): Promise<void> { /* no-op — Sub-phase D + F handle scheduler + host sync */ }
+  chords: ChordEntry[],
+  tempo: number,
+  loop: boolean,
+  onBeat: (beat: number) => void,
+  onStop: () => void,
+): Promise<void> {
+  if (!inJuce()) { onStop(); return }
+  // Voice every chord up-front so C++ gets concrete midi notes.
+  const payload = chords.map(c => ({
+    notes: getVoicedNotes(
+      c.notes,
+      c.inversion ?? 'root',
+      c.drop2 ?? false,
+      c.bassNote ?? null,
+      c.voicingType ?? 'standard',
+      c.voicingVariant ?? 0,
+    ),
+    bars: typeof c.bars === 'number' ? c.bars : 1,
+  }))
+  // Sync tempo + loop before kicking off — both are read by the Scheduler.
+  await setTempo(tempo)
+  await setLoop(loop)
+  void callNative('playProgression', payload, loop)
+  // currentBeat updates flow back via the C++ → JS currentBeatChanged
+  // event (subscribed in lib/stateSync.ts). The onBeat callback the UI
+  // passes is retained for browser-mode parity but unused in plugin mode.
+  void onBeat
+  void onStop
+}
 
-export function stopPlayback(): void { /* no-op */ }
+export function stopPlayback(): void {
+  if (inJuce()) { void callNative('stopAll') }
+}

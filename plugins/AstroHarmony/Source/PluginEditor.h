@@ -65,6 +65,8 @@ private:
     void emitInitialBridgeState();
     void emitStateRestored();
 
+    int diagDumpCounter { 0 };
+
     //==========================================================================
     // Resource provider
     std::optional<juce::WebBrowserComponent::Resource> getResource (const juce::String& url);
