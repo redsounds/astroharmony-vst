@@ -1,7 +1,8 @@
 
 import { useState } from 'react'
 import { useStore } from '@/lib/store'
-import { exportProgressionAsMidi } from '@/lib/midi'
+import { exportProgressionAsMidi, exportProgressionAsMidiNative } from '@/lib/midi'
+import { inJuce } from '@/jucebridge'
 
 function slugify(name: string): string {
   // Conservative slug: keep letters/digits/spaces/dashes, collapse spaces to '-',
@@ -17,31 +18,50 @@ function slugify(name: string): string {
 
 export default function BottomBar() {
   const { progression, tempo, sessions, activeSessionId, transpose, setTranspose } = useStore()
-  const [flash, setFlash] = useState<'idle' | 'done' | 'empty'>('idle')
+  const [flash, setFlash] = useState<'idle' | 'done' | 'empty' | 'cancelled' | 'error'>('idle')
 
-  function handleExport() {
+  async function handleExport() {
     const activeName = sessions.find(s => s.id === activeSessionId)?.name?.trim() || 'Untitled'
-    const ok = exportProgressionAsMidi({
-      progression, tempo,
-      trackName: activeName,
-      filename: slugify(activeName),
-      transpose,
-    })
-    setFlash(ok ? 'done' : 'empty')
+
+    if (progression.length === 0) {
+      setFlash('empty'); setTimeout(() => setFlash('idle'), 1800); return
+    }
+
+    if (inJuce()) {
+      // Plugin path: native FileChooser writes the .mid where the user picks.
+      const res = await exportProgressionAsMidiNative({
+        progression, tempo, trackName: activeName,
+        filename: slugify(activeName), transpose,
+      })
+      if (res.success) setFlash('done')
+      else if (res.cancelled) setFlash('cancelled')
+      else setFlash('error')
+    } else {
+      // Browser path (component dev outside the plugin): trigger a download.
+      const ok = exportProgressionAsMidi({
+        progression, tempo, trackName: activeName,
+        filename: slugify(activeName), transpose,
+      })
+      setFlash(ok ? 'done' : 'empty')
+    }
     setTimeout(() => setFlash('idle'), 1800)
   }
 
   const transposeLabel = transpose === 0 ? '0' : (transpose > 0 ? `+${transpose}` : `${transpose}`)
 
   const buttonLabel =
-    flash === 'done'  ? '✓ EXPORTED'        :
-    flash === 'empty' ? '⚠ ADD CHORDS FIRST' :
-                        'EXPORT MIDI ⤴'
+    flash === 'done'      ? '✓ EXPORTED'         :
+    flash === 'empty'     ? '⚠ ADD CHORDS FIRST' :
+    flash === 'cancelled' ? '— CANCELLED'        :
+    flash === 'error'     ? '⚠ EXPORT FAILED'    :
+                            'EXPORT MIDI ⤴'
 
   const buttonBg =
-    flash === 'done'  ? 'var(--cc-resolution)' :
-    flash === 'empty' ? 'var(--cc-warn)'       :
-                        'var(--cc-accent)'
+    flash === 'done'      ? 'var(--cc-resolution)' :
+    flash === 'empty'     ? 'var(--cc-warn)'       :
+    flash === 'error'     ? 'var(--cc-warn)'       :
+    flash === 'cancelled' ? 'var(--cc-bg-elev)'    :
+                            'var(--cc-accent)'
 
   return (
     <footer

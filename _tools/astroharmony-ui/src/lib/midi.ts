@@ -8,6 +8,7 @@
 
 import type { ChordEntry } from '@/types/music'
 import { getVoicedNotes } from '@/lib/audio'
+import { callNative, inJuce } from '@/jucebridge'
 
 // ── Constants ──────────────────────────────────────────────────────
 
@@ -192,6 +193,32 @@ export function exportProgressionAsMidi(opts: BuildOpts & { filename?: string })
   return true
 }
 
+// ── Native (JUCE plugin) export ────────────────────────────────────
+// In the Electron app, downloadMidi triggers a browser save dialog. Inside
+// the JUCE WebView2, that path silently fails — the host has no concept of
+// where "the downloads folder" is. Sub-phase G routes through a native
+// function that opens juce::FileChooser and writes the bytes to disk.
+
+export type NativeExportResult =
+  | { success: true; path: string }
+  | { success: false; cancelled?: boolean; error?: string }
+
+export async function exportProgressionAsMidiNative(
+  opts: BuildOpts & { filename?: string },
+): Promise<NativeExportResult> {
+  if (opts.progression.length === 0) return { success: false, error: 'empty progression' }
+  if (!inJuce()) return { success: false, error: 'not running inside JUCE host' }
+
+  const bytes = buildMidiFile(opts)
+  const filename = opts.filename ?? safeFilename(opts.trackName ?? 'astroharmony')
+
+  // Spread the typed array into a plain number[] because the JUCE bridge
+  // marshals via JSON and doesn't preserve Uint8Array semantics.
+  const asArray = Array.from(bytes)
+  const res = await callNative<NativeExportResult>('exportMidi', asArray, filename)
+  return res ?? { success: false, error: 'no response' }
+}
+
 function safeFilename(name: string): string {
-  return name.trim().replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '-').slice(0, 60) || 'cinematic-composer'
+  return name.trim().replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '-').slice(0, 60) || 'astroharmony'
 }

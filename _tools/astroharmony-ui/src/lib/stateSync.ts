@@ -50,7 +50,7 @@ interface PersistedState {
 
 const SCHEMA_VERSION = 1
 
-function pickPersisted(): PersistedState {
+export function pickPersisted(): PersistedState {
   const s = useStore.getState()
   return {
     v: SCHEMA_VERSION,
@@ -78,7 +78,7 @@ function pickPersisted(): PersistedState {
 
 let isApplyingFromNative = false
 
-function applyPersisted(blob: PersistedState) {
+export function applyPersisted(blob: PersistedState) {
   isApplyingFromNative = true
   try {
     useStore.setState({

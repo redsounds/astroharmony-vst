@@ -1,11 +1,11 @@
 {
   "plugin_name": "AstroHarmony",
   "version": "v0.0.0",
-  "current_phase": "impl_sub_d_complete",
+  "current_phase": "impl_sub_g_complete",
   "ui_framework": "webview",
   "complexity_score": 5,
   "created_at": "2026-06-24T21:50:00Z",
-  "last_modified": "2026-06-25T21:55:00Z",
+  "last_modified": "2026-06-26T14:05:00Z",
   "phase_history": [
     {
       "phase": "phase_0_spike",
@@ -37,6 +37,16 @@
       "phase": "impl_sub_b_complete",
       "completed_at": "2026-06-25T13:05:00Z",
       "notes": "Full Vite + React 19 port of all 14 cinematic-composer v2 components. 1.0 MB single-file HTML bundle (vite-plugin-singlefile), 6.6 MB plugin DLL. Side-by-side parity with Electron app verified by user. 3 bugs found and fixed: B.6 (suggest +) + B.7 (voicing-style hang) both caused by stubbed Tone.js await hanging in useChordPreview; fix was to strip Tone.js entirely from audio.ts (Sub-phase D will wire C++ audio through callNative). B.8 (mood→voicing not auto-applying) caused by source's require('@/lib/moodEngine') CommonJS workaround silently failing in Vite ES modules — fix was static import + remove try/catch. No audio at this stage — Sub-phase D adds it."
+    },
+    {
+      "phase": "impl_sub_e_complete",
+      "completed_at": "2026-06-26T13:25:00Z",
+      "notes": "File-based session library live. Source/io/SessionStore handles list/load/save/delete/rename/duplicate against %APPDATA%/AstroHarmony/sessions/<id>.json. Each file: {id, name, createdAt, updatedAt, data}. JS-side store.ts session methods rewritten — every method routes through callNative now, Zustand sessions[] + activeSessionId act as cache and refresh from C++ after every mutation. Legacy localStorage migration / cc_state_v2 / cc_session_<id> code stripped from store.ts (~250 lines deleted). Third binary_data target (AstroHarmony_Seeds, NAMESPACE Seeds) embeds cinematic-composer/lib/seed-sessions.json (16 KB of curated starters: Sad01 etc.); SessionStore.seedBundledStartersIfNeeded() drops them on disk on first launch, gated by a .seeded marker file so deleted seeds don't come back. Sub-phase E bugs found + fixed: E.5a CMake binary_data strips hyphens entirely when mangling — 'seed-sessions.json' becomes 'seedsessions_json' (not 'seed_sessions_json'); E.5b .seeded marker was written even on failed seeds, locking out retries; E.5c juce::String(const char*, size_t) ctor interprets size as char count and corrupts UTF-8 multi-byte codepoints — switched to String::fromUTF8 so musical symbols ♭/♯/△ survive. User-verified: starter presets show in Projects dropdown, save/load/delete/rename/duplicate all work, presets survive DAW close+reopen, chord names render correctly."
+    },
+    {
+      "phase": "impl_sub_g_complete",
+      "completed_at": "2026-06-26T14:05:00Z",
+      "notes": "MIDI export wired end-to-end. JS uses existing lib/midi.ts buildMidiFile to produce Format-0 .mid bytes with embedded tempo + time signature + transpose. New exportProgressionAsMidiNative wraps the bytes as a plain number[] (the JUCE bridge marshals via JSON so Uint8Array isn't preserved) and calls native fn exportMidi. C++ side opens juce::FileChooser asynchronously (defaults to userMusicDirectory with the active session name as suggested filename), writes the bytes to the chosen path with replaceWithData. BottomBar EXPORT MIDI button branches on inJuce() — plugin path uses native FileChooser, browser path keeps the legacy Blob download for component dev outside the DLL. User-verified: save dialog opens, .mid drops into FL Studio playlist with correct notes, pitch transpose param affects the exported MIDI as well as audio. Sub-phase F (host transport sync) skipped per user direction — they don't want the plugin tempo locked to DAW transport."
     },
     {
       "phase": "impl_sub_d_complete",

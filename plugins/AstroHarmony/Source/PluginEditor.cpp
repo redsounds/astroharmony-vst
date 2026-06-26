@@ -259,48 +259,136 @@ AstroHarmonyAudioProcessorEditor::AstroHarmonyAudioProcessorEditor (AstroHarmony
         complete (juce::var (true));
     };
 
-    // ----- Sessions (real impl in Sub-phase E) -----
-    auto listSessions = [] (const juce::Array<juce::var>& /*args*/,
-                            NativeFnCompletion complete)
-    {
-        complete (juce::var (juce::Array<juce::var>{})); // empty array for now
-    };
-
-    auto loadSession = [] (const juce::Array<juce::var>& /*args*/,
-                           NativeFnCompletion complete)
-    {
-        complete (makeErrorObject ("sessions not implemented yet"));
-    };
-
-    auto saveCurrentSession = [] (const juce::Array<juce::var>& /*args*/,
-                                  NativeFnCompletion complete)
-    {
-        complete (makeErrorObject ("sessions not implemented yet"));
-    };
-
-    auto deleteSession = [] (const juce::Array<juce::var>& /*args*/,
-                             NativeFnCompletion complete)
-    {
-        complete (makeErrorObject ("sessions not implemented yet"));
-    };
-
-    auto renameSession = [] (const juce::Array<juce::var>& /*args*/,
-                             NativeFnCompletion complete)
-    {
-        complete (makeErrorObject ("sessions not implemented yet"));
-    };
-
-    auto duplicateSession = [] (const juce::Array<juce::var>& /*args*/,
+    // ----- Sessions (Sub-phase E — backed by SessionStore on %APPDATA%) -----
+    auto listSessions = [this] (const juce::Array<juce::var>& /*args*/,
                                 NativeFnCompletion complete)
     {
-        complete (makeErrorObject ("sessions not implemented yet"));
+        complete (sessionStore.listSessions());
     };
 
-    // ----- MIDI export (real impl in Sub-phase G) -----
-    auto exportMidi = [] (const juce::Array<juce::var>& /*args*/,
-                          NativeFnCompletion complete)
+    auto loadSession = [this] (const juce::Array<juce::var>& args,
+                               NativeFnCompletion complete)
     {
-        complete (makeErrorObject ("midi export not implemented yet"));
+        if (args.size() < 1) { complete (makeErrorObject ("missing id")); return; }
+        const auto record = sessionStore.loadSession (args[0].toString());
+        if (record.hasProperty ("error"))
+        {
+            complete (record);
+            return;
+        }
+        // Mirror the loaded data into the processor's cached blob so a
+        // subsequent DAW save captures the just-loaded state.
+        const auto data = record.getProperty ("data", juce::var());
+        if (data.isObject())
+            audioProcessor.setCustomStateBlob (juce::JSON::toString (data));
+        complete (record);
+    };
+
+    auto saveCurrentSession = [this] (const juce::Array<juce::var>& args,
+                                      NativeFnCompletion complete)
+    {
+        // args: [ id?: string, name?: string, blob: string ]
+        // The blob is the full JSON state from the JS side — same shape
+        // pushState uses. If id is empty a new session is created; if it
+        // matches an existing file the file is overwritten in place.
+        const juce::String id   = args.size() >= 1 ? args[0].toString() : juce::String();
+        const juce::String name = args.size() >= 2 ? args[1].toString() : juce::String();
+        const juce::String blob = args.size() >= 3 ? args[2].toString() : juce::String();
+        complete (sessionStore.saveSession (id, name, blob));
+    };
+
+    auto deleteSession = [this] (const juce::Array<juce::var>& args,
+                                 NativeFnCompletion complete)
+    {
+        if (args.size() < 1) { complete (makeErrorObject ("missing id")); return; }
+        const bool ok = sessionStore.deleteSession (args[0].toString());
+        complete (makeObject ({ { "success", ok } }));
+    };
+
+    auto renameSession = [this] (const juce::Array<juce::var>& args,
+                                 NativeFnCompletion complete)
+    {
+        if (args.size() < 2) { complete (makeErrorObject ("missing id/name")); return; }
+        const bool ok = sessionStore.renameSession (args[0].toString(), args[1].toString());
+        complete (makeObject ({ { "success", ok } }));
+    };
+
+    auto duplicateSession = [this] (const juce::Array<juce::var>& args,
+                                    NativeFnCompletion complete)
+    {
+        if (args.size() < 1) { complete (makeErrorObject ("missing id")); return; }
+        complete (sessionStore.duplicateSession (args[0].toString()));
+    };
+
+    // ----- MIDI export (Sub-phase G) -----
+    // args[0] = number[] (Uint8Array spread into a plain array on the JS
+    //           side because the JUCE bridge marshals via JSON and doesn't
+    //           preserve typed arrays).
+    // args[1] = suggested filename without extension.
+    auto exportMidi = [this] (const juce::Array<juce::var>& args,
+                              NativeFnCompletion complete)
+    {
+        if (args.size() < 1 || ! args[0].isArray())
+        {
+            complete (makeErrorObject ("missing bytes"));
+            return;
+        }
+
+        auto* arr = args[0].getArray();
+        if (arr == nullptr || arr->isEmpty())
+        {
+            complete (makeErrorObject ("empty bytes"));
+            return;
+        }
+
+        const juce::String suggestedNameRaw = args.size() >= 2 ? args[1].toString() : juce::String ("astroharmony");
+        const auto suggestedName = suggestedNameRaw.isNotEmpty() ? suggestedNameRaw : juce::String ("astroharmony");
+
+        // Copy bytes into a MemoryBlock now so the FileChooser callback can
+        // capture them safely.
+        juce::MemoryBlock bytes;
+        bytes.setSize ((size_t) arr->size(), false);
+        auto* dst = static_cast<juce::uint8*> (bytes.getData());
+        for (int i = 0; i < arr->size(); ++i)
+            dst[i] = (juce::uint8) ((int) (*arr)[i] & 0xFF);
+
+        const auto defaultDir = juce::File::getSpecialLocation (
+            juce::File::SpecialLocationType::userMusicDirectory);
+        const auto initialFile = defaultDir.getChildFile (suggestedName + ".mid");
+
+        auto chooser = std::make_shared<juce::FileChooser> (
+            "Export MIDI", initialFile, "*.mid");
+
+        const int flags = juce::FileBrowserComponent::saveMode
+                        | juce::FileBrowserComponent::canSelectFiles
+                        | juce::FileBrowserComponent::warnAboutOverwriting;
+
+        chooser->launchAsync (flags,
+            [chooser, bytes = std::move (bytes), complete] (const juce::FileChooser& fc) mutable
+            {
+                auto result = fc.getResult();
+                if (result == juce::File{})
+                {
+                    complete (makeObject ({
+                        { "success", false },
+                        { "cancelled", true },
+                    }));
+                    return;
+                }
+                if (result.getFileExtension().isEmpty())
+                    result = result.withFileExtension ("mid");
+
+                if (! result.replaceWithData (bytes.getData(), bytes.getSize()))
+                {
+                    complete (makeErrorObject ("write failed"));
+                    return;
+                }
+
+                complete (makeObject ({
+                    { "success", true },
+                    { "path",    juce::var (result.getFullPathName()) },
+                }));
+            });
     };
 
     // ----- Diagnostics -----

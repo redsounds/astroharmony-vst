@@ -46,6 +46,19 @@ juce_add_binary_data(AstroHarmony_Samples
 )
 
 # ============================================
+# BINARY DATA (Bundled starter presets — Sub-phase E)
+# ============================================
+# Drops the same seed-sessions.json the Electron app ships with into the
+# DLL so first-launch users see the curated starter progressions in their
+# Projects dropdown. SessionStore seeds these on first run when
+# %APPDATA%\AstroHarmony\sessions\ is empty.
+juce_add_binary_data(AstroHarmony_Seeds
+    NAMESPACE Seeds
+    HEADER_NAME SeedsData.h
+    SOURCES Seeds/seed-sessions.json
+)
+
+# ============================================
 # PLUGIN DEFINITION — VST3 Instrument
 # ============================================
 juce_add_plugin(AstroHarmony
@@ -71,6 +84,7 @@ target_sources(AstroHarmony
         Source/audio/SampleLibrary.cpp
         Source/audio/SamplerEngine.cpp
         Source/audio/Scheduler.cpp
+        Source/io/SessionStore.cpp
 )
 
 target_include_directories(AstroHarmony
@@ -85,6 +99,7 @@ target_link_libraries(AstroHarmony
     PRIVATE
         AstroHarmony_WebUI
         AstroHarmony_Samples
+        AstroHarmony_Seeds
         juce::juce_audio_basics
         juce::juce_audio_devices
         juce::juce_audio_formats

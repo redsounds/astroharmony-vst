@@ -1,0 +1,714 @@
+[
+  {
+    "name": "Sad01",
+    "data": {
+      "v": 2,
+      "progression": [
+        {
+          "notes": [
+            "A",
+            "C",
+            "E",
+            "G",
+            "B"
+          ],
+          "displayName": "Am9",
+          "roman": "i",
+          "sourceRoot": "A",
+          "sourceScale": "aeolian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "A",
+          "drop2": false,
+          "voicingVariant": 0,
+          "colorIndex": 0
+        },
+        {
+          "notes": [
+            "E",
+            "G",
+            "B",
+            "D"
+          ],
+          "displayName": "Em7",
+          "roman": "v",
+          "sourceRoot": "A",
+          "sourceScale": "aeolian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "E",
+          "drop2": false,
+          "voicingVariant": 1,
+          "colorIndex": 1
+        },
+        {
+          "notes": [
+            "D",
+            "F",
+            "A"
+          ],
+          "displayName": "Dm",
+          "roman": "iv",
+          "sourceRoot": "A",
+          "sourceScale": "aeolian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "D",
+          "drop2": false,
+          "voicingVariant": 2,
+          "colorIndex": 2
+        },
+        {
+          "notes": [
+            "Bb",
+            "D",
+            "F"
+          ],
+          "displayName": "B♭",
+          "roman": "♭II",
+          "sourceRoot": "Bb",
+          "sourceScale": "aeolian",
+          "voicingType": "cinematic",
+          "bassNote": "Bb",
+          "inversion": "root",
+          "drop2": false,
+          "voicingVariant": 3,
+          "colorIndex": 3
+        }
+      ],
+      "root": "A",
+      "scaleType": "aeolian",
+      "extensions": [
+        "triad"
+      ],
+      "tempo": 100,
+      "loop": true,
+      "voicingType": "cinematic",
+      "inversion": "root",
+      "drop2": false,
+      "activeMood": "sad",
+      "moodIntensity": 0.5,
+      "progressionVoicing": "cinematic",
+      "pianoView": "chord",
+      "activeInstrument": "piano",
+      "playbackVolume": 80,
+      "transpose": 0
+    }
+  },
+  {
+    "name": "Epic01",
+    "data": {
+      "v": 2,
+      "progression": [
+        {
+          "notes": [
+            "Eb",
+            "G",
+            "Bb",
+            "F"
+          ],
+          "displayName": "E♭add9",
+          "roman": "I",
+          "sourceRoot": "Eb",
+          "sourceScale": "ionian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "Eb",
+          "drop2": false,
+          "voicingVariant": 0,
+          "colorIndex": 0
+        },
+        {
+          "notes": [
+            "G",
+            "Bb",
+            "D"
+          ],
+          "displayName": "Gm",
+          "roman": "iii",
+          "sourceRoot": "G",
+          "sourceScale": "ionian",
+          "voicingType": "cinematic",
+          "bassNote": "G",
+          "inversion": "root",
+          "drop2": false,
+          "voicingVariant": 2,
+          "colorIndex": 1
+        },
+        {
+          "notes": [
+            "Ab",
+            "C",
+            "Eb",
+            "G"
+          ],
+          "displayName": "A♭Δ7",
+          "roman": "IV",
+          "sourceRoot": "Eb",
+          "sourceScale": "ionian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "Ab",
+          "drop2": false,
+          "voicingVariant": 2,
+          "colorIndex": 2
+        },
+        {
+          "notes": [
+            "Ab",
+            "Cb",
+            "Eb"
+          ],
+          "displayName": "A♭m",
+          "roman": "iv",
+          "sourceRoot": "Ab",
+          "sourceScale": "ionian",
+          "voicingType": "cinematic",
+          "bassNote": "Ab",
+          "inversion": "root",
+          "drop2": false,
+          "voicingVariant": 3,
+          "colorIndex": 3
+        }
+      ],
+      "root": "D#",
+      "scaleType": "ionian",
+      "extensions": [
+        "triad"
+      ],
+      "tempo": 219,
+      "loop": true,
+      "voicingType": "cinematic",
+      "inversion": "root",
+      "drop2": false,
+      "activeMood": "epic",
+      "moodIntensity": 0.5,
+      "progressionVoicing": "cinematic",
+      "pianoView": "chord",
+      "activeInstrument": "trumpet"
+    }
+  },
+  {
+    "name": "Love01",
+    "data": {
+      "v": 2,
+      "progression": [
+        {
+          "notes": [
+            "F",
+            "A",
+            "C",
+            "E",
+            "G"
+          ],
+          "displayName": "FΔ9",
+          "roman": "I",
+          "sourceRoot": "F",
+          "sourceScale": "ionian",
+          "voicingType": "neoSoul",
+          "inversion": "root",
+          "bassNote": "F",
+          "drop2": false,
+          "voicingVariant": 0,
+          "colorIndex": 0
+        },
+        {
+          "notes": [
+            "A",
+            "C",
+            "E"
+          ],
+          "displayName": "Am",
+          "roman": "iii",
+          "sourceRoot": "A",
+          "sourceScale": "ionian",
+          "voicingType": "neoSoul",
+          "bassNote": "A",
+          "inversion": "root",
+          "drop2": false,
+          "voicingVariant": 1,
+          "colorIndex": 1
+        },
+        {
+          "notes": [
+            "D",
+            "F",
+            "A",
+            "C",
+            "E"
+          ],
+          "displayName": "Dm9",
+          "roman": "vi",
+          "sourceRoot": "F",
+          "sourceScale": "ionian",
+          "voicingType": "neoSoul",
+          "inversion": "root",
+          "bassNote": "D",
+          "drop2": false,
+          "voicingVariant": 2,
+          "colorIndex": 2
+        },
+        {
+          "notes": [
+            "G",
+            "Bb",
+            "D",
+            "F",
+            "A"
+          ],
+          "displayName": "Gm9",
+          "roman": "ii",
+          "sourceRoot": "F",
+          "sourceScale": "ionian",
+          "voicingType": "neoSoul",
+          "inversion": "root",
+          "bassNote": "G",
+          "drop2": false,
+          "voicingVariant": 1,
+          "colorIndex": 3
+        }
+      ],
+      "root": "F",
+      "scaleType": "ionian",
+      "extensions": [
+        "triad"
+      ],
+      "tempo": 219,
+      "loop": true,
+      "voicingType": "neoSoul",
+      "inversion": "root",
+      "drop2": false,
+      "activeMood": "love",
+      "moodIntensity": 0.5,
+      "progressionVoicing": "neoSoul",
+      "pianoView": "chord",
+      "activeInstrument": "flute"
+    }
+  },
+  {
+    "name": "Horror01",
+    "data": {
+      "v": 2,
+      "progression": [
+        {
+          "notes": [
+            "D",
+            "Eb",
+            "A"
+          ],
+          "displayName": "Dphry",
+          "roman": "sus2",
+          "sourceRoot": "D",
+          "sourceScale": "phrygian",
+          "isNonStandard": true,
+          "badFifth": false,
+          "bassNote": "D",
+          "inversion": "root",
+          "drop2": false,
+          "voicingType": "cinematic",
+          "voicingVariant": 0,
+          "colorIndex": 0
+        },
+        {
+          "notes": [
+            "D",
+            "F",
+            "Ab",
+            "B"
+          ],
+          "displayName": "D°7",
+          "roman": "i°",
+          "sourceRoot": "D",
+          "sourceScale": "phrygian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "D",
+          "drop2": false,
+          "voicingVariant": 0,
+          "colorIndex": 1
+        },
+        {
+          "notes": [
+            "G",
+            "C",
+            "D"
+          ],
+          "displayName": "Gsus4",
+          "roman": "sus4",
+          "sourceRoot": "D",
+          "sourceScale": "phrygian",
+          "isNonStandard": false,
+          "badFifth": false,
+          "bassNote": "G",
+          "inversion": "root",
+          "drop2": false,
+          "voicingType": "cinematic",
+          "voicingVariant": 2,
+          "colorIndex": 2
+        },
+        {
+          "notes": [
+            "Eb",
+            "Gb",
+            "Bb"
+          ],
+          "displayName": "E♭m",
+          "roman": "♭ii",
+          "sourceRoot": "Eb",
+          "sourceScale": "phrygian",
+          "voicingType": "cinematic",
+          "bassNote": "Eb",
+          "inversion": "root",
+          "drop2": false,
+          "voicingVariant": 0,
+          "colorIndex": 4
+        },
+        {
+          "notes": [
+            "C",
+            "Eb",
+            "G"
+          ],
+          "displayName": "Cm",
+          "roman": "♭vii",
+          "sourceRoot": "C",
+          "sourceScale": "phrygian",
+          "voicingType": "cinematic",
+          "bassNote": "C",
+          "inversion": "root",
+          "drop2": false,
+          "voicingVariant": 2,
+          "colorIndex": 4
+        }
+      ],
+      "root": "D",
+      "scaleType": "phrygian",
+      "extensions": [
+        "triad"
+      ],
+      "tempo": 100,
+      "loop": true,
+      "voicingType": "cinematic",
+      "inversion": "root",
+      "drop2": false,
+      "activeMood": "horror",
+      "moodIntensity": 0.5,
+      "progressionVoicing": "cinematic",
+      "pianoView": "chord",
+      "activeInstrument": "piano",
+      "playbackVolume": 80,
+      "transpose": 0
+    }
+  },
+  {
+    "name": "Tension01",
+    "data": {
+      "v": 2,
+      "progression": [
+        {
+          "notes": [
+            "E#",
+            "G#",
+            "B",
+            "C##"
+          ],
+          "displayName": "E♯°7",
+          "roman": "vii°",
+          "sourceRoot": "F#",
+          "sourceScale": "aeolian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "E#",
+          "drop2": false,
+          "voicingVariant": 0,
+          "colorIndex": 0
+        },
+        {
+          "notes": [
+            "E",
+            "A",
+            "B"
+          ],
+          "displayName": "Esus4",
+          "roman": "sus4",
+          "sourceRoot": "F#",
+          "sourceScale": "aeolian",
+          "isNonStandard": false,
+          "badFifth": false,
+          "bassNote": "E",
+          "inversion": "root",
+          "drop2": false,
+          "voicingType": "cinematic",
+          "voicingVariant": 3,
+          "colorIndex": 1
+        },
+        {
+          "notes": [
+            "C#",
+            "F#",
+            "G#",
+            "B"
+          ],
+          "displayName": "C♯7sus4",
+          "roman": "V",
+          "sourceRoot": "F#",
+          "sourceScale": "aeolian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "C#",
+          "drop2": false,
+          "voicingVariant": 3,
+          "colorIndex": 3
+        },
+        {
+          "notes": [
+            "D",
+            "G#",
+            "A"
+          ],
+          "displayName": "Dlyd",
+          "roman": "sus4",
+          "sourceRoot": "F#",
+          "sourceScale": "aeolian",
+          "isNonStandard": true,
+          "badFifth": false,
+          "bassNote": "D",
+          "inversion": "root",
+          "drop2": false,
+          "voicingType": "cinematic",
+          "voicingVariant": 0,
+          "colorIndex": 4
+        },
+        {
+          "notes": [
+            "C#",
+            "F#",
+            "G#",
+            "B"
+          ],
+          "displayName": "C♯7sus4",
+          "roman": "V",
+          "sourceRoot": "F#",
+          "sourceScale": "aeolian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "C#",
+          "drop2": false,
+          "voicingVariant": 1,
+          "colorIndex": 5
+        }
+      ],
+      "root": "F#",
+      "scaleType": "aeolian",
+      "extensions": [
+        "triad"
+      ],
+      "tempo": 219,
+      "loop": true,
+      "voicingType": "cinematic",
+      "inversion": "root",
+      "drop2": false,
+      "activeMood": "tension",
+      "moodIntensity": 0.5,
+      "progressionVoicing": "cinematic",
+      "pianoView": "chord",
+      "activeInstrument": "piano",
+      "playbackVolume": 80,
+      "transpose": 0
+    }
+  },
+  {
+    "name": "Hopeful01",
+    "data": {
+      "v": 2,
+      "progression": [
+        {
+          "notes": [
+            "Bb",
+            "D",
+            "F",
+            "A"
+          ],
+          "displayName": "B♭Δ7",
+          "roman": "IV",
+          "sourceRoot": "F",
+          "sourceScale": "ionian",
+          "voicingType": "pianoSpread",
+          "inversion": "root",
+          "bassNote": "Bb",
+          "drop2": false,
+          "voicingVariant": 0,
+          "colorIndex": 0
+        },
+        {
+          "notes": [
+            "D",
+            "F",
+            "A",
+            "C",
+            "E"
+          ],
+          "displayName": "Dm9",
+          "roman": "vi",
+          "sourceRoot": "F",
+          "sourceScale": "ionian",
+          "voicingType": "pianoSpread",
+          "inversion": "root",
+          "bassNote": "D",
+          "drop2": false,
+          "voicingVariant": 1,
+          "colorIndex": 1
+        },
+        {
+          "notes": [
+            "C",
+            "F",
+            "G"
+          ],
+          "displayName": "Csus4",
+          "roman": "V",
+          "sourceRoot": "F",
+          "sourceScale": "ionian",
+          "voicingType": "pianoSpread",
+          "inversion": "root",
+          "bassNote": "C",
+          "drop2": false,
+          "voicingVariant": 2,
+          "colorIndex": 2
+        },
+        {
+          "notes": [
+            "A",
+            "C",
+            "E"
+          ],
+          "displayName": "Am",
+          "roman": "iii",
+          "sourceRoot": "A",
+          "sourceScale": "ionian",
+          "voicingType": "pianoSpread",
+          "bassNote": "A",
+          "inversion": "root",
+          "drop2": false,
+          "voicingVariant": 0,
+          "colorIndex": 4
+        }
+      ],
+      "root": "F",
+      "scaleType": "ionian",
+      "extensions": [
+        "triad"
+      ],
+      "tempo": 219,
+      "loop": true,
+      "voicingType": "pianoSpread",
+      "inversion": "root",
+      "drop2": false,
+      "activeMood": "hopeful",
+      "moodIntensity": 0.5,
+      "progressionVoicing": "pianoSpread",
+      "pianoView": "chord",
+      "activeInstrument": "flute",
+      "playbackVolume": 80,
+      "transpose": 0
+    }
+  },
+  {
+    "name": "Dark01",
+    "data": {
+      "v": 2,
+      "progression": [
+        {
+          "notes": [
+            "D",
+            "F",
+            "A",
+            "C",
+            "E"
+          ],
+          "displayName": "Dm9",
+          "roman": "i",
+          "sourceRoot": "D",
+          "sourceScale": "aeolian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "D",
+          "drop2": false,
+          "voicingVariant": 0,
+          "colorIndex": 0
+        },
+        {
+          "notes": [
+            "A",
+            "C",
+            "E",
+            "G"
+          ],
+          "displayName": "Am7",
+          "roman": "v",
+          "sourceRoot": "D",
+          "sourceScale": "aeolian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "A",
+          "drop2": false,
+          "voicingVariant": 1,
+          "colorIndex": 1
+        },
+        {
+          "notes": [
+            "Bb",
+            "D",
+            "F",
+            "A"
+          ],
+          "displayName": "B♭Δ7",
+          "roman": "♭VI",
+          "sourceRoot": "D",
+          "sourceScale": "aeolian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "Bb",
+          "drop2": false,
+          "voicingVariant": 2,
+          "colorIndex": 2
+        },
+        {
+          "notes": [
+            "C#",
+            "E",
+            "G",
+            "A#"
+          ],
+          "displayName": "C♯°7",
+          "roman": "vii°",
+          "sourceRoot": "D",
+          "sourceScale": "aeolian",
+          "voicingType": "cinematic",
+          "inversion": "root",
+          "bassNote": "C#",
+          "drop2": false,
+          "voicingVariant": 0,
+          "colorIndex": 4
+        }
+      ],
+      "root": "D",
+      "scaleType": "aeolian",
+      "extensions": [
+        "triad"
+      ],
+      "tempo": 219,
+      "loop": true,
+      "voicingType": "cinematic",
+      "inversion": "root",
+      "drop2": false,
+      "activeMood": "dark",
+      "moodIntensity": 0.5,
+      "progressionVoicing": "cinematic",
+      "pianoView": "chord",
+      "activeInstrument": "strings",
+      "playbackVolume": 80,
+      "transpose": 0
+    }
+  }
+]

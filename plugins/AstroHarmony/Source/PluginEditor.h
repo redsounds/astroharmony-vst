@@ -2,8 +2,10 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_extra/juce_gui_extra.h>
+#include <memory>
 #include "PluginProcessor.h"
 #include "ParameterIDs.hpp"
+#include "io/SessionStore.h"
 
 //==============================================================================
 // AstroHarmony Editor — Sub-phase C (JS<->C++ bridge).
@@ -35,6 +37,7 @@ public:
 
 private:
     AstroHarmonyAudioProcessor& audioProcessor;
+    SessionStore sessionStore;
 
     //==========================================================================
     // 1. PARAMETER RELAYS (declared first → destroyed last)
