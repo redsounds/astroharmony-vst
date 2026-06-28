@@ -84,6 +84,7 @@ target_sources(AstroHarmony
     PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
+        Source/audio/AstroSamplerVoice.cpp
         Source/audio/SampleLibrary.cpp
         Source/audio/SamplerEngine.cpp
         Source/audio/Scheduler.cpp

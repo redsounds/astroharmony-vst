@@ -1,4 +1,5 @@
 #include "SamplerEngine.h"
+#include "AstroSamplerVoice.h"
 
 namespace
 {
@@ -33,14 +34,16 @@ namespace
     // next to piano — the user-reported issue at the end of Sub-phase D.
     float instrumentGainFor (const juce::String& id)
     {
-        // dB → linear, normalised so piano (the reference instrument) = 1.0.
-        // piano = -6 dB → 0.5012, factor 1.0 (reference)
-        // flute = -8 dB → 0.3981, factor 0.794
-        // strings = +10 dB → 3.162, factor 6.31
-        // trumpet = -12 dB → 0.2512, factor 0.501
-        if (id == "piano")   return 1.0f;
-        if (id == "flute")   return 0.794f;
-        if (id == "strings") return 6.31f;
+        // dB → linear, starting from the cinematic-composer base offsets
+        // and adjusted by ear so the four instruments feel level-matched
+        // at the same master volume:
+        //   piano   -1 dB pull-down so transient hammer hits don't dominate
+        //   flute   +1 dB nudge so it sits with the keys
+        //   strings +2 dB nudge so the section reads above the piano
+        // (Multiply by 10^(dB/20): -1 dB → ×0.891, +1 dB → ×1.122, +2 dB → ×1.259.)
+        if (id == "piano")   return 0.891f;   // 1.000 × 0.891
+        if (id == "flute")   return 0.891f;   // 0.794 × 1.122
+        if (id == "strings") return 7.94f;    // 6.31  × 1.259
         if (id == "trumpet") return 0.501f;
         return 1.0f;
     }
@@ -79,7 +82,7 @@ SamplerEngine::SamplerEngine()
     logToFile ("=== SamplerEngine ctor ===");
     synth.setNoteStealingEnabled (true);
     for (int i = 0; i < kMaxPolyphony; ++i)
-        synth.addVoice (new juce::SamplerVoice());
+        synth.addVoice (new AstroSamplerVoice());
 
     // Tone.js Reverb defaults from cinematic-composer/lib/audio.ts:
     //   roomSize 0.45, damping 0.55, wetLevel 0.14
@@ -246,11 +249,27 @@ void SamplerEngine::playChord (const std::vector<int>& midiNotes,
 
     {
         const juce::SpinLock::ScopedLockType sl (soundsLock);
-        // JUCE Synthesiser::noteOn already stops any voice currently
-        // playing the same note (with tail-off) before allocating the new
-        // voice — there's no need to do it manually. Doing it manually
-        // calls stopNote twice on the same voice, which confuses the
-        // envelope state and silences the new voice early.
+
+        // Fast-fade any voice currently playing one of these notes BEFORE
+        // calling noteOn for the new one. JUCE's noteOn also stops same-
+        // note voices but uses the SamplerSound's release envelope
+        // (~80 ms) — which is long enough for a transient-rich sample
+        // (piano, trumpet) to comb-filter against the new voice. Our
+        // AstroSamplerVoice::stopNoteFast arms a 3 ms hard fade-out so
+        // the old transient is silent before the new transient develops.
+        for (int n : midiNotes)
+        {
+            const int target = juce::jlimit (0, 127, n);
+            for (int i = 0; i < synth.getNumVoices(); ++i)
+            {
+                if (auto* v = dynamic_cast<AstroSamplerVoice*> (synth.getVoice (i)))
+                {
+                    if (v->isVoiceActive() && v->getCurrentlyPlayingNote() == target)
+                        v->stopNoteFast (0.003);
+                }
+            }
+        }
+
         for (int n : midiNotes)
         {
             synth.noteOn (1, juce::jlimit (0, 127, n), juce::jlimit (0.0f, 1.0f, velocity));

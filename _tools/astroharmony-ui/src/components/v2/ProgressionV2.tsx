@@ -252,14 +252,12 @@ export default function ProgressionV2() {
         }}>
           {progression.length > 0
             ? `${lastBarStart - 1} bar${lastBarStart - 1 === 1 ? '' : 's'} total`
-            : 'drag right edge of a chord to resize · shift+scroll for fine-tune'}
+            : 'drag right edge of a chord to resize'}
         </span>
         {progression.length > 0 && (
           <button
-            onClick={() => {
-              if (confirm('Clear all chords from the progression?')) clearProgression()
-            }}
-            title="Clear progression"
+            onClick={() => clearProgression()}
+            title="Clear progression (use Ctrl+Z to undo)"
             style={{
               marginLeft: '.75rem',
               background: 'transparent',

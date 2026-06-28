@@ -81,23 +81,11 @@ export default function SettingsPopover({ open, onClose, anchorRight, anchorTop 
       </div>
 
       <div style={appTitle}>AstroHarmony</div>
-      <div style={tagline}>Chord-progression composer for film scoring.</div>
+      <div style={tagline}>Chord-progression composer.</div>
 
       <div style={sectionLabel}>Version</div>
       <div style={infoBlock}>
-        <Row label="Build"  value={info?.version ?? '—'} />
-        <Row label="Date"   value={info?.buildDate ?? '—'} />
-        <Row label="JUCE"   value={info?.juceVersion ?? '—'} />
-        <Row label="Sample rate" value={info?.sampleRate ? `${Math.round(info.sampleRate)} Hz` : '—'} />
-      </div>
-
-      <div style={sectionLabel}>Strings samples</div>
-      <div style={infoBlock}>
-        <div style={creditName}>VSCO 2 Community Edition</div>
-        <div style={creditMeta}>
-          Sam Gossner · <span style={{ color: 'var(--cc-accent)', fontWeight: 600 }}>CC-BY 4.0</span>
-        </div>
-        <div style={creditNotes}>github.com/sgossner/VSCO-2-CE</div>
+        <Row label="Build" value={info?.version ?? '—'} />
       </div>
 
       <div style={footer}>
@@ -158,15 +146,6 @@ const rowLabel: React.CSSProperties = {
 }
 const rowValue: React.CSSProperties = {
   color: 'var(--cc-text)', fontFamily: 'JetBrains Mono, ui-monospace, monospace',
-}
-const creditName: React.CSSProperties = {
-  fontSize: 12, fontWeight: 600, color: 'var(--cc-text)',
-}
-const creditMeta: React.CSSProperties = {
-  fontSize: 10.5, color: 'var(--cc-text-dim)', marginTop: 2,
-}
-const creditNotes: React.CSSProperties = {
-  fontSize: 10, color: 'var(--cc-text-mute)', marginTop: 4, lineHeight: 1.4,
 }
 const footer: React.CSSProperties = {
   marginTop: 16, paddingTop: 10,

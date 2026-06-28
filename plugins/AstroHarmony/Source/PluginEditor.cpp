@@ -490,7 +490,7 @@ AstroHarmonyAudioProcessorEditor::AstroHarmonyAudioProcessorEditor (AstroHarmony
                                 NativeFnCompletion complete)
     {
         complete (makeObject ({
-            { "version",     juce::var (juce::String (JUCE_STRINGIFY (JucePlugin_VersionString))) },
+            { "version",     juce::var (juce::String (JucePlugin_VersionString)) },
             { "buildDate",   juce::var (juce::String (__DATE__) + " " + juce::String (__TIME__)) },
             { "juceVersion", juce::var (juce::SystemStats::getJUCEVersion()) },
             { "sampleRate",  juce::var (audioProcessor.getSampleRate()) },

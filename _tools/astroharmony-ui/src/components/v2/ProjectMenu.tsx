@@ -29,6 +29,7 @@ export default function ProjectMenu({ open, onClose, anchorLeft, anchorTop }: Pr
   } = useStore()
   const rootRef = useRef<HTMLDivElement | null>(null)
   const modalRef = useRef<HTMLDivElement | null>(null)
+  const deleteModalRef = useRef<HTMLDivElement | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
@@ -36,6 +37,10 @@ export default function ProjectMenu({ open, onClose, anchorLeft, anchorTop }: Pr
   // Electron's renderer disables window.prompt() for security, so we roll our
   // own modal instead of relying on the browser dialog.
   const [saveAsName, setSaveAsName] = useState<string | null>(null)
+  // `deleteTargetId === null` means the delete-confirmation modal is closed.
+  // We use a styled in-app modal instead of window.confirm() so the WebView's
+  // ugly "juce.backend says" dialog doesn't appear.
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   // Close on outside click + Escape
   useEffect(() => {
@@ -47,6 +52,7 @@ export default function ProjectMenu({ open, onClose, anchorLeft, anchorTop }: Pr
       // the user clicks the modal's Save button.
       if (rootRef.current.contains(e.target as Node)) return
       if (modalRef.current && modalRef.current.contains(e.target as Node)) return
+      if (deleteModalRef.current && deleteModalRef.current.contains(e.target as Node)) return
       onClose()
     }
     function onKey(e: KeyboardEvent) {
@@ -106,8 +112,12 @@ export default function ProjectMenu({ open, onClose, anchorLeft, anchorTop }: Pr
   function handleDelete(id: string) {
     const target = sessions.find(s => s.id === id)
     if (!target) return
-    if (!confirm(`Delete "${target.name}"?`)) return
-    deleteSession(id)
+    setDeleteTargetId(id)
+  }
+
+  function confirmDelete() {
+    if (deleteTargetId) deleteSession(deleteTargetId)
+    setDeleteTargetId(null)
   }
 
   function handleDuplicate(id: string) {
@@ -127,8 +137,63 @@ export default function ProjectMenu({ open, onClose, anchorLeft, anchorTop }: Pr
     setEditName('')
   }
 
+  const deleteTarget = deleteTargetId ? sessions.find(s => s.id === deleteTargetId) : null
+
   return (
     <>
+    {deleteTarget && (
+      <div
+        ref={deleteModalRef}
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,.55)',
+          zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'DM Sans, sans-serif',
+        }}
+        onMouseDown={(e) => { if (e.target === e.currentTarget) setDeleteTargetId(null) }}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') setDeleteTargetId(null)
+          else if (e.key === 'Enter') confirmDelete()
+        }}
+        tabIndex={-1}
+      >
+        <div style={{
+          background: 'var(--cc-bg-panel)', border: '1px solid var(--cc-border)',
+          borderRadius: 10, padding: '1.1rem 1.2rem', minWidth: 320, maxWidth: 380,
+          boxShadow: '0 12px 32px rgba(0,0,0,.55)',
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--cc-text)', marginBottom: 8 }}>
+            Delete session?
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--cc-text-dim)', lineHeight: 1.5, marginBottom: 14 }}>
+            “{deleteTarget.name}” will be permanently removed. This cannot be undone.
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <button
+              onClick={() => setDeleteTargetId(null)}
+              autoFocus
+              style={{
+                padding: '.4rem .75rem', borderRadius: 6,
+                background: 'transparent', border: '1px solid var(--cc-border)',
+                color: 'var(--cc-text-dim)', cursor: 'pointer', fontSize: 12,
+                fontFamily: 'DM Sans, sans-serif',
+              }}
+            >Cancel</button>
+            <button
+              onClick={confirmDelete}
+              style={{
+                padding: '.4rem .85rem', borderRadius: 6,
+                background: 'var(--cc-warn, #e687a0)',
+                border: '1px solid var(--cc-warn, #e687a0)',
+                color: '#fff',
+                cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                fontFamily: 'DM Sans, sans-serif',
+              }}
+            >Delete</button>
+          </div>
+        </div>
+      </div>
+    )}
     {saveAsName !== null && (
       <div
         ref={modalRef}

@@ -1,0 +1,287 @@
+ASTROHARMONY -- END USER LICENSE AGREEMENT
+==========================================
+
+Publisher:    Astrotone Audio
+Software:     AstroHarmony (VST3 + Standalone)
+Version:      1.0.0
+Last updated: 2026-06-28
+
+This End User License Agreement ("Agreement") is a legal contract
+between you ("Licensee" or "You") and Astrotone Audio ("Licensor",
+"We", "Us"), the developer and publisher of AstroHarmony (the
+"Software"). By installing, activating, or using the Software, You
+agree to be bound by the terms of this Agreement. If You do not
+agree, do not install or use the Software.
+
+
+1. LICENSE GRANT
+----------------
+
+Subject to Your compliance with this Agreement and full payment of
+the applicable fee, the Licensor grants You a personal, non-exclusive,
+non-transferable, non-sublicensable license to:
+
+  a) Install and use one (1) activated copy of the Software on up to
+     three (3) personal computing devices that You own or primarily
+     control;
+
+  b) Use the Software inside any digital audio workstation that
+     supports the VST3 plugin format, or as the bundled Standalone
+     application, for any lawful purpose, including commercial
+     production of music, soundtracks, beats, scores, or other
+     creative output;
+
+  c) Retain full ownership of every musical composition, MIDI file,
+     audio file, or other creative work that You produce with the
+     Software. The Licensor claims no rights in Your output.
+
+The Software is licensed, not sold. The Licensor retains all right,
+title, and interest in and to the Software, including all intellectual
+property rights.
+
+
+2. SYSTEM REQUIREMENTS
+----------------------
+
+The Software is supported on:
+
+  - Microsoft Windows 10 (version 1809 or later) or Windows 11,
+    64-bit, with the Microsoft Edge WebView2 Runtime installed
+    (the Runtime ships with Windows 11 and recent Windows 10 builds
+    and can be installed free of charge from Microsoft otherwise);
+
+  - VST3-compatible host applications, including but not limited to
+    FL Studio 20.7+, Reaper 6+, Cubase 12+, Studio One 5+, Ableton
+    Live 11+, and Bitwig Studio 4+; or the bundled Standalone
+    application.
+
+The Software is not supported on Windows 7, Windows 8 / 8.1, macOS,
+Linux, or VST2-only host applications. The Licensor does not warrant
+operation on unsupported platforms.
+
+
+3. ACTIVATION AND LICENSE KEYS
+------------------------------
+
+Each purchase of the Software entitles You to one (1) unique license
+key. You must enter this key once per device to unlock the Software.
+Activation is performed offline against a list of valid keys bundled
+with the Software; no internet connection is required and no
+information about You or Your machine is transmitted at activation
+time.
+
+License keys are personal and may not be shared, resold, transferred,
+or otherwise distributed to any third party. We reserve the right to
+invalidate a license key that we reasonably believe has been shared
+or fraudulently obtained. Invalidation in subsequent versions of the
+Software does not retroactively affect previously installed versions.
+
+
+4. RESTRICTIONS
+---------------
+
+You agree NOT to:
+
+  a) Copy, modify, adapt, translate, or create derivative works of the
+     Software, except as expressly permitted by this Agreement or by
+     mandatory applicable law;
+
+  b) Reverse engineer, disassemble, decompile, or otherwise attempt to
+     derive the source code of the Software, except to the limited
+     extent permitted by applicable law that overrides this
+     restriction;
+
+  c) Extract, repackage, redistribute, sublicense, or otherwise make
+     available any of the audio samples, presets, or other assets
+     bundled with the Software, except as part of musical works that
+     You produce with the Software;
+
+  d) Rent, lease, lend, sell, redistribute, sublicense, or otherwise
+     transfer the Software or any portion thereof to any third party;
+
+  e) Remove, alter, or obscure any copyright, trademark, attribution,
+     or other proprietary notices on or in the Software;
+
+  f) Use the Software in any way that violates applicable law,
+     infringes the intellectual property rights of any third party,
+     or attempts to circumvent the activation or licensing mechanisms
+     of the Software.
+
+
+5. THIRD-PARTY COMPONENTS AND ATTRIBUTIONS
+------------------------------------------
+
+The Software bundles audio samples, an audio framework, and several
+open-source libraries provided by third parties under their own
+licenses. You acknowledge and agree to the following terms.
+
+Audio samples:
+
+  - Salamander Grand Piano V3 -- (c) Alexander Holm, distributed
+    under Creative Commons Zero (CC0 / Public Domain). Used for the
+    Grand Piano instrument. No attribution required, included for
+    transparency.
+
+  - University of Iowa Electronic Music Studios (MIS) samples --
+    Public Domain. Used for the Flute and Trumpet instruments.
+    Source: theremin.music.uiowa.edu
+
+  - VSCO 2 Community Edition -- (c) Versilian Studios / Sam Gossner,
+    distributed under Creative Commons Attribution 4.0 International
+    (CC BY 4.0). Used for the Strings instrument. Source:
+    github.com/sgossner/VSCO-2-CE
+
+Audio framework:
+
+  - JUCE 8 -- (c) Raw Material Software Limited. Used under a
+    commercial JUCE license granted to Astrotone Audio.
+
+  - VST 3 SDK -- (c) Steinberg Media Technologies GmbH. VST is a
+    trademark of Steinberg Media Technologies GmbH, registered in
+    Europe and other countries.
+
+  - Microsoft Edge WebView2 Runtime -- (c) Microsoft Corporation,
+    invoked at runtime under the terms of the Microsoft Software
+    License Terms shipped with the Runtime.
+
+Open-source libraries (each used under its respective license,
+MIT or equivalent permissive terms):
+
+  - React, Zustand, @dnd-kit, Tonal.js, Vite, vite-plugin-singlefile
+
+Bundled fonts:
+
+  - Fraunces -- (c) Undercase Type, SIL Open Font License 1.1.
+  - DM Sans -- (c) Colophon Foundry / Google Fonts, SIL Open
+    Font License 1.1.
+
+The bundling of CC BY 4.0 material in the Software does not extend
+the CC BY license to the Software itself, which remains proprietary.
+
+
+6. NO WARRANTY
+--------------
+
+THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY
+OF ANY KIND, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING WITHOUT
+LIMITATION ANY WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, TITLE, OR NON-INFRINGEMENT. THE LICENSOR DOES NOT WARRANT
+THAT THE SOFTWARE WILL BE ERROR-FREE, UNINTERRUPTED, SECURE, COMPATIBLE
+WITH ANY SPECIFIC HOST APPLICATION, OR THAT DEFECTS WILL BE CORRECTED.
+
+YOU ASSUME ALL RESPONSIBILITY FOR THE SELECTION OF THE SOFTWARE TO
+ACHIEVE YOUR INTENDED RESULTS AND FOR THE INSTALLATION, USE, AND
+RESULTS OBTAINED FROM THE SOFTWARE.
+
+
+7. LIMITATION OF LIABILITY
+--------------------------
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL
+THE LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL,
+CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS,
+REVENUE, DATA, AUDIO RECORDINGS, MIDI FILES, OR DATA USE, ARISING
+OUT OF OR RELATED TO THIS AGREEMENT OR YOUR USE OF (OR INABILITY TO
+USE) THE SOFTWARE, EVEN IF THE LICENSOR HAS BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.
+
+THE LICENSOR'S TOTAL CUMULATIVE LIABILITY UNDER THIS AGREEMENT, FOR
+ALL CAUSES OF ACTION AND UNDER ANY THEORY OF LIABILITY, SHALL NOT
+EXCEED THE AMOUNT YOU PAID FOR THE SOFTWARE.
+
+Nothing in this Agreement excludes or limits liability that cannot be
+excluded or limited under applicable law (such as liability for gross
+negligence or wilful misconduct under Lithuanian or EU law).
+
+
+8. PRIVACY
+----------
+
+The Software does not collect or transmit personal data. All data is
+stored locally on Your device:
+
+  - Saved chord progressions and project sessions:
+        %APPDATA%\AstroHarmony\sessions\
+  - Activated license key:
+        %APPDATA%\AstroHarmony\license.txt
+
+The Software does not require an internet connection to operate after
+activation, and does not phone home, collect telemetry, or transmit
+analytics of any kind.
+
+
+9. REFUND / RIGHT OF WITHDRAWAL
+-------------------------------
+
+If You are a consumer in the European Union or the United Kingdom,
+You have a statutory right under EU Directive 2011/83/EU (or the
+equivalent UK Consumer Contracts Regulations) to withdraw from this
+Agreement within fourteen (14) days from the date of purchase,
+without giving any reason and at no additional cost.
+
+By activating the Software on any device within the 14-day
+withdrawal period, You expressly request immediate performance of the
+Agreement and acknowledge that You lose Your right of withdrawal once
+activation completes. This corresponds to Article 16(m) of EU
+Directive 2011/83/EU. Unactivated copies are eligible for refund
+within the 14-day window upon written request to the contact address
+below.
+
+For consumers outside the EU / UK, refund eligibility is at the
+Licensor's discretion and is limited to unactivated copies within
+14 days of purchase.
+
+
+10. TERMINATION
+---------------
+
+This Agreement remains in effect until terminated. Your rights under
+this Agreement terminate automatically and without notice if You fail
+to comply with any of its terms. The Licensor may also terminate this
+Agreement if Your license key is found to have been shared, resold,
+or fraudulently obtained, or in the event of a chargeback or reversed
+payment.
+
+Upon termination, You must cease all use of the Software and delete
+all copies in Your possession. Termination of this Agreement does
+not entitle You to a refund of license fees already paid, except
+where required by applicable law (see Section 9). Sections 4, 5, 6,
+7, 11, and 12 survive termination.
+
+
+11. GOVERNING LAW AND DISPUTE RESOLUTION
+----------------------------------------
+
+This Agreement is governed by and construed in accordance with the
+laws of the Republic of Lithuania, without regard to its conflict of
+law principles. Any dispute arising out of or in connection with this
+Agreement shall be subject to the exclusive jurisdiction of the
+competent courts of Lithuania, except where mandatory consumer
+protection laws of Your country of residence provide otherwise.
+
+
+12. CONTACT
+-----------
+
+For support, refund requests, or any questions about this Agreement,
+contact:
+
+    info@astrotoneaudio.com
+    https://astrotoneaudio.com
+
+
+13. ENTIRE AGREEMENT
+--------------------
+
+This Agreement constitutes the entire agreement between You and the
+Licensor concerning the Software and supersedes all prior or
+contemporaneous communications, proposals, and representations,
+whether oral or written. If any provision of this Agreement is held
+to be unenforceable, the remaining provisions will remain in full
+force and effect.
+
+
+Copyright (c) 2026 Astrotone Audio. All rights reserved.
+
+VST is a trademark of Steinberg Media Technologies GmbH, registered
+in Europe and other countries.
