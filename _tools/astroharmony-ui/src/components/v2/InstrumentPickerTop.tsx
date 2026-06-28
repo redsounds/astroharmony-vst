@@ -4,19 +4,80 @@ import { useStore } from '@/lib/store'
 
 type InstrumentLite = { id: string; label: string; category: string }
 
-// Emoji icon per instrument id. Falls back to category icon.
-const ICON: Record<string, string> = {
-  piano: '🎹',
-  strings: '🎻',
-  flute: '🪈',
-  trumpet: '🎺',
+// Inline SVG icons — Unicode emoji used to work but the flute glyph 🪈 was
+// added in Unicode 14 (Sep 2021), so older Windows 10 builds without the
+// updated Segoe UI Emoji font render it as a tofu box. SVG sidesteps the
+// font dependency entirely.
+function InstrumentIcon({ id, category, size = 22 }: { id: string; category: string; size?: number }) {
+  const key = id in INSTRUMENT_SVG ? id : CATEGORY_TO_INSTRUMENT[category] ?? 'piano'
+  const path = INSTRUMENT_SVG[key]
+  return (
+    <svg
+      width={size} height={size} viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="1.6"
+      strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {path}
+    </svg>
+  )
 }
-const CATEGORY_ICON: Record<string, string> = {
-  keys: '🎹',
-  strings: '🎻',
-  woodwinds: '🪈',
-  brass: '🎺',
+
+const CATEGORY_TO_INSTRUMENT: Record<string, string> = {
+  keys: 'piano',
+  strings: 'strings',
+  woodwinds: 'flute',
+  brass: 'trumpet',
 }
+
+// Minimal line-art glyphs — recognisable at 16-24 px, render identically on
+// every platform.
+const INSTRUMENT_SVG: Record<string, React.ReactNode> = {
+  // Piano — keybed with three black keys.
+  piano: (
+    <>
+      <rect x="3" y="7" width="18" height="11" rx="1" />
+      <line x1="8" y1="7" x2="8" y2="18" />
+      <line x1="13" y1="7" x2="13" y2="18" />
+      <line x1="18" y1="7" x2="18" y2="18" />
+      <rect x="6" y="7" width="2.5" height="6" fill="currentColor" stroke="none" />
+      <rect x="11" y="7" width="2.5" height="6" fill="currentColor" stroke="none" />
+      <rect x="16" y="7" width="2.5" height="6" fill="currentColor" stroke="none" />
+    </>
+  ),
+  // Violin — pear body + neck + scroll.
+  strings: (
+    <>
+      <path d="M9 14c0 2.5 1.5 4 3 4s3-1.5 3-4-1.5-4-3-4-3 1.5-3 4z" />
+      <line x1="12" y1="10" x2="12" y2="4" />
+      <line x1="10.5" y1="10" x2="10.5" y2="5" />
+      <line x1="13.5" y1="10" x2="13.5" y2="5" />
+      <path d="M10.5 4.5c0-.6.7-1 1.5-1s1.5.4 1.5 1" />
+    </>
+  ),
+  // Flute — long tube with finger holes.
+  flute: (
+    <>
+      <line x1="3.5" y1="14" x2="20.5" y2="10" />
+      <circle cx="7" cy="13" r=".9" fill="currentColor" stroke="none" />
+      <circle cx="10" cy="12.3" r=".9" fill="currentColor" stroke="none" />
+      <circle cx="13" cy="11.6" r=".9" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="10.9" r=".9" fill="currentColor" stroke="none" />
+      <path d="M3.5 14l-.7-.7v1.4z" fill="currentColor" stroke="none" />
+    </>
+  ),
+  // Trumpet — bell + valve cluster + mouthpiece.
+  trumpet: (
+    <>
+      <path d="M2 12h11l5-3v6l-5-3" />
+      <rect x="7" y="9" width="1.4" height="6" />
+      <rect x="9.5" y="9" width="1.4" height="6" />
+      <rect x="12" y="9" width="1.4" height="6" />
+      <circle cx="2" cy="12" r="1.2" fill="currentColor" stroke="none" />
+    </>
+  ),
+}
+
 const CATEGORY_LABEL: Record<string, string> = {
   keys: 'Keys',
   strings: 'Strings',
@@ -50,7 +111,6 @@ export default function InstrumentPickerTop() {
   }, [open])
 
   const current = instruments.find(i => i.id === activeInstrument)
-  const icon = (id: string, cat: string) => ICON[id] ?? CATEGORY_ICON[cat] ?? '🎵'
 
   // Group by category for the popover.
   const byCategory: Record<string, InstrumentLite[]> = {}
@@ -64,7 +124,11 @@ export default function InstrumentPickerTop() {
         title="Choose instrument"
         style={pillBtn}
       >
-        <span style={{ fontSize: 16, lineHeight: 1 }}>{current ? icon(current.id, current.category) : '🎵'}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 1, color: 'var(--cc-text-dim)' }}>
+          {current
+            ? <InstrumentIcon id={current.id} category={current.category} size={16} />
+            : <InstrumentIcon id="piano" category="keys" size={16} />}
+        </span>
         <span>{current?.label ?? 'Instrument'}</span>
         <span style={{ opacity: .55 }}>▾</span>
       </button>
@@ -90,7 +154,9 @@ export default function InstrumentPickerTop() {
                         borderColor: isActive ? 'var(--cc-accent)' : 'var(--cc-border-soft)',
                       }}
                     >
-                      <span style={{ fontSize: 22, lineHeight: 1 }}>{icon(i.id, i.category)}</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 1 }}>
+                        <InstrumentIcon id={i.id} category={i.category} size={22} />
+                      </span>
                       <span style={{ fontSize: 11, fontWeight: 500 }}>{i.label}</span>
                     </button>
                   )

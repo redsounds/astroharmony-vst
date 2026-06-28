@@ -62,16 +62,19 @@ juce_add_binary_data(AstroHarmony_Seeds
 # PLUGIN DEFINITION — VST3 Instrument
 # ============================================
 juce_add_plugin(AstroHarmony
-    COMPANY_NAME "Noizefield"
-    PLUGIN_MANUFACTURER_CODE Nfld
-    PLUGIN_CODE Astr
+    COMPANY_NAME "Astrotone Audio"
+    COMPANY_WEBSITE "astrotoneaudio.com"
+    BUNDLE_ID com.astrotoneaudio.astroharmony
+    PLUGIN_MANUFACTURER_CODE Atau
+    PLUGIN_CODE Asth
+    VERSION "1.0.0"
     FORMATS ${PLUGIN_FORMATS}
     PRODUCT_NAME "AstroHarmony"
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     NEEDS_WEBVIEW2 ${NEEDS_WEBVIEW2}
-    VST3_CATEGORIES Instrument Synth Tools
+    VST3_CATEGORIES Instrument Synth Sampler
 )
 
 # ============================================

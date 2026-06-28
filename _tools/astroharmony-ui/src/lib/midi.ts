@@ -219,6 +219,24 @@ export async function exportProgressionAsMidiNative(
   return res ?? { success: false, error: 'no response' }
 }
 
+/** Initiates an OS-level file drag of a freshly-built .mid file. The C++
+ *  side writes the bytes to a temp path and posts a Windows OLE drag, so
+ *  the DAW (or Explorer, or any drop target) receives a standard file
+ *  drop event. Must be called while the mouse button is still pressed —
+ *  Windows DoDragDrop refuses to start otherwise. */
+export async function dragProgressionAsMidiNative(
+  opts: BuildOpts & { filename?: string },
+): Promise<NativeExportResult> {
+  if (opts.progression.length === 0) return { success: false, error: 'empty progression' }
+  if (!inJuce()) return { success: false, error: 'not running inside JUCE host' }
+
+  const bytes = buildMidiFile(opts)
+  const filename = opts.filename ?? safeFilename(opts.trackName ?? 'astroharmony')
+  const asArray = Array.from(bytes)
+  const res = await callNative<NativeExportResult>('dragMidiOut', asArray, filename)
+  return res ?? { success: false, error: 'no response' }
+}
+
 function safeFilename(name: string): string {
   return name.trim().replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '-').slice(0, 60) || 'astroharmony'
 }

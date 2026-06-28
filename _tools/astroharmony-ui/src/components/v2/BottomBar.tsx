@@ -1,7 +1,11 @@
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useStore } from '@/lib/store'
-import { exportProgressionAsMidi, exportProgressionAsMidiNative } from '@/lib/midi'
+import {
+  exportProgressionAsMidi,
+  exportProgressionAsMidiNative,
+  dragProgressionAsMidiNative,
+} from '@/lib/midi'
 import { inJuce } from '@/jucebridge'
 
 function slugify(name: string): string {
@@ -18,10 +22,19 @@ function slugify(name: string): string {
 
 export default function BottomBar() {
   const { progression, tempo, sessions, activeSessionId, transpose, setTranspose } = useStore()
-  const [flash, setFlash] = useState<'idle' | 'done' | 'empty' | 'cancelled' | 'error'>('idle')
+  const [flash, setFlash] = useState<'idle' | 'done' | 'empty' | 'cancelled' | 'error' | 'dragging'>('idle')
+
+  // True once mousedown+move passes the threshold, so the subsequent mouseup
+  // doesn't also fire React's onClick → onClick would re-export to file.
+  const draggedRef = useRef(false)
+
+  function getActiveName(): string {
+    return sessions.find(s => s.id === activeSessionId)?.name?.trim() || 'Untitled'
+  }
 
   async function handleExport() {
-    const activeName = sessions.find(s => s.id === activeSessionId)?.name?.trim() || 'Untitled'
+    if (draggedRef.current) { draggedRef.current = false; return }
+    const activeName = getActiveName()
 
     if (progression.length === 0) {
       setFlash('empty'); setTimeout(() => setFlash('idle'), 1800); return
@@ -47,6 +60,44 @@ export default function BottomBar() {
     setTimeout(() => setFlash('idle'), 1800)
   }
 
+  // Drag-out: if the user mousedowns and drags past a small threshold, fire
+  // an OS-level file drag via the native bridge. The DAW receives a normal
+  // file drop and imports the .mid. Click-without-move falls through to
+  // React's onClick → save-as-file. Only enabled inside the plugin (browser
+  // mode can't initiate a Windows OLE drag).
+  function handleMouseDown(e: React.MouseEvent<HTMLButtonElement>) {
+    if (!inJuce() || progression.length === 0) return
+    const startX = e.clientX
+    const startY = e.clientY
+    let triggered = false
+    draggedRef.current = false
+
+    const onMove = (ev: MouseEvent) => {
+      if (triggered) return
+      if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) < 5) return
+      triggered = true
+      draggedRef.current = true
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      const activeName = getActiveName()
+      setFlash('dragging')
+      void dragProgressionAsMidiNative({
+        progression, tempo, trackName: activeName,
+        filename: slugify(activeName), transpose,
+      }).then(res => {
+        setFlash(res.success ? 'done' : 'error')
+        setTimeout(() => setFlash('idle'), 1800)
+      })
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
   const transposeLabel = transpose === 0 ? '0' : (transpose > 0 ? `+${transpose}` : `${transpose}`)
 
   const buttonLabel =
@@ -54,6 +105,7 @@ export default function BottomBar() {
     flash === 'empty'     ? '⚠ ADD CHORDS FIRST' :
     flash === 'cancelled' ? '— CANCELLED'        :
     flash === 'error'     ? '⚠ EXPORT FAILED'    :
+    flash === 'dragging'  ? '⤴ DRAG TO DAW'      :
                             'EXPORT MIDI ⤴'
 
   const buttonBg =
@@ -61,6 +113,7 @@ export default function BottomBar() {
     flash === 'empty'     ? 'var(--cc-warn)'       :
     flash === 'error'     ? 'var(--cc-warn)'       :
     flash === 'cancelled' ? 'var(--cc-bg-elev)'    :
+    flash === 'dragging'  ? 'var(--cc-accent)'     :
                             'var(--cc-accent)'
 
   return (
@@ -127,6 +180,7 @@ export default function BottomBar() {
 
       <button
         onClick={handleExport}
+        onMouseDown={handleMouseDown}
         disabled={flash !== 'idle' && flash !== 'empty'}
         style={{
           background: buttonBg,
@@ -137,14 +191,17 @@ export default function BottomBar() {
           fontSize: 12,
           fontWeight: 600,
           letterSpacing: '.05em',
-          cursor: 'pointer',
+          cursor: inJuce() && progression.length > 0 ? 'grab' : 'pointer',
           display: 'flex',
           alignItems: 'center',
           gap: 6,
           fontFamily: 'DM Sans, sans-serif',
           transition: 'background .2s',
+          userSelect: 'none',
         }}
-        title={progression.length === 0 ? 'Add at least one chord' : 'Download progression as MIDI'}
+        title={progression.length === 0
+          ? 'Add at least one chord'
+          : 'Click to save .mid file, or drag onto your DAW'}
       >
         {buttonLabel}
       </button>

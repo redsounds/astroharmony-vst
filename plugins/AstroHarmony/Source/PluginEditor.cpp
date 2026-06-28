@@ -320,6 +320,64 @@ AstroHarmonyAudioProcessorEditor::AstroHarmonyAudioProcessorEditor (AstroHarmony
         complete (sessionStore.duplicateSession (args[0].toString()));
     };
 
+    // ----- MIDI drag-out (Sub-phase G — bonus) -----
+    // The user grabs the EXPORT MIDI button and drags it onto the DAW; the
+    // DAW receives a standard OS file drop and imports the .mid as a clip.
+    // Flow: JS detects mousedown+move past a threshold → calls this fn →
+    // we write the bytes to a stable temp path and post an OS-level drag
+    // via juce::DragAndDropContainer::performExternalDragDropOfFiles.
+    auto dragMidiOut = [this] (const juce::Array<juce::var>& args,
+                               NativeFnCompletion complete)
+    {
+        if (args.size() < 1 || ! args[0].isArray())
+        {
+            complete (makeErrorObject ("missing bytes")); return;
+        }
+        auto* arr = args[0].getArray();
+        if (arr == nullptr || arr->isEmpty())
+        {
+            complete (makeErrorObject ("empty bytes")); return;
+        }
+
+        const juce::String suggestedNameRaw = args.size() >= 2 ? args[1].toString() : juce::String ("astroharmony");
+        const auto suggestedName = suggestedNameRaw.isNotEmpty() ? suggestedNameRaw : juce::String ("astroharmony");
+
+        // Temp file we hand to the OS drag. Same filename every time per
+        // session — the previous drag's file gets overwritten cleanly.
+        auto tempDir = juce::File::getSpecialLocation (
+            juce::File::SpecialLocationType::tempDirectory).getChildFile ("AstroHarmony");
+        tempDir.createDirectory();
+        auto tempFile = tempDir.getChildFile (suggestedName + ".mid");
+
+        juce::MemoryBlock bytes;
+        bytes.setSize ((size_t) arr->size(), false);
+        auto* dst = static_cast<juce::uint8*> (bytes.getData());
+        for (int i = 0; i < arr->size(); ++i)
+            dst[i] = (juce::uint8) ((int) (*arr)[i] & 0xFF);
+
+        if (! tempFile.replaceWithData (bytes.getData(), bytes.getSize()))
+        {
+            complete (makeErrorObject ("temp write failed")); return;
+        }
+
+        // Initiate the drag on the message thread. performExternalDragDropOfFiles
+        // blocks until the user releases the mouse, so we fire-and-forget on
+        // the next message-loop tick and return success to JS immediately —
+        // by that point the user is already mid-drag and the result code
+        // doesn't influence UI state.
+        const juce::StringArray files { tempFile.getFullPathName() };
+        juce::MessageManager::callAsync ([files]
+        {
+            juce::DragAndDropContainer::performExternalDragDropOfFiles (
+                files, false /* canMoveFiles — keep our temp, DAW only reads */);
+        });
+
+        complete (makeObject ({
+            { "success", true },
+            { "path",    juce::var (tempFile.getFullPathName()) },
+        }));
+    };
+
     // ----- MIDI export (Sub-phase G) -----
     // args[0] = number[] (Uint8Array spread into a plain array on the JS
     //           side because the JUCE bridge marshals via JSON and doesn't
@@ -391,6 +449,42 @@ AstroHarmonyAudioProcessorEditor::AstroHarmonyAudioProcessorEditor (AstroHarmony
             });
     };
 
+    // ----- License persistence (Sub-phase H) -----
+    // Plain-text storage at %APPDATA%/AstroHarmony/license.txt — the JS
+    // side re-validates the code against the shipped hash list on every
+    // launch, so the security is in the hash check, not in obscuring this
+    // file. Empty string clears the license.
+    auto licenseFile = juce::File::getSpecialLocation (
+                           juce::File::SpecialLocationType::userApplicationDataDirectory)
+                       .getChildFile ("AstroHarmony")
+                       .getChildFile ("license.txt");
+
+    auto getLicenseCode = [licenseFile] (const juce::Array<juce::var>& /*args*/,
+                                         NativeFnCompletion complete)
+    {
+        if (! licenseFile.existsAsFile())
+        {
+            complete (juce::var (juce::String()));
+            return;
+        }
+        complete (juce::var (licenseFile.loadFileAsString().trim()));
+    };
+
+    auto setLicenseCode = [licenseFile] (const juce::Array<juce::var>& args,
+                                         NativeFnCompletion complete)
+    {
+        const juce::String code = args.size() >= 1 ? args[0].toString().trim() : juce::String();
+        licenseFile.getParentDirectory().createDirectory();
+        if (code.isEmpty())
+        {
+            licenseFile.deleteFile();
+            complete (juce::var (true));
+            return;
+        }
+        const bool ok = licenseFile.replaceWithText (code);
+        complete (juce::var (ok));
+    };
+
     // ----- Diagnostics -----
     auto getBuildInfo = [this] (const juce::Array<juce::var>& /*args*/,
                                 NativeFnCompletion complete)
@@ -436,6 +530,9 @@ AstroHarmonyAudioProcessorEditor::AstroHarmonyAudioProcessorEditor (AstroHarmony
             .withNativeFunction ("renameSession",        std::move (renameSession))
             .withNativeFunction ("duplicateSession",     std::move (duplicateSession))
             .withNativeFunction ("exportMidi",           std::move (exportMidi))
+            .withNativeFunction ("dragMidiOut",          std::move (dragMidiOut))
+            .withNativeFunction ("getLicenseCode",       std::move (getLicenseCode))
+            .withNativeFunction ("setLicenseCode",       std::move (setLicenseCode))
             .withNativeFunction ("getBuildInfo",         std::move (getBuildInfo)));
 
     addAndMakeVisible (*webView);
