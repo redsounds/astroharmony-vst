@@ -62,3 +62,6 @@ node_modules/
 
 # User-specific install helper (hardcoded paths)
 install-astroharmony.bat
+
+# Inno Setup installer output (the .iss script itself is tracked)
+installer/dist/

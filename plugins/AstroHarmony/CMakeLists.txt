@@ -75,6 +75,8 @@ juce_add_plugin(AstroHarmony
     NEEDS_MIDI_OUTPUT FALSE
     NEEDS_WEBVIEW2 ${NEEDS_WEBVIEW2}
     VST3_CATEGORIES Instrument Synth Sampler
+    ICON_BIG   "${CMAKE_SOURCE_DIR}/icon.png"
+    ICON_SMALL "${CMAKE_SOURCE_DIR}/icon.png"
 )
 
 # ============================================

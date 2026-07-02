@@ -55,10 +55,6 @@ The Software is supported on:
     Live 11+, and Bitwig Studio 4+; or the bundled Standalone
     application.
 
-The Software is not supported on Windows 7, Windows 8 / 8.1, macOS,
-Linux, or VST2-only host applications. The Licensor does not warrant
-operation on unsupported platforms.
-
 
 3. ACTIVATION AND LICENSE KEYS
 ------------------------------
@@ -111,30 +107,11 @@ You agree NOT to:
 5. THIRD-PARTY COMPONENTS AND ATTRIBUTIONS
 ------------------------------------------
 
-The Software bundles audio samples, an audio framework, and several
-open-source libraries provided by third parties under their own
-licenses. You acknowledge and agree to the following terms.
-
-Audio samples:
-
-  - Salamander Grand Piano V3 -- (c) Alexander Holm, distributed
-    under Creative Commons Zero (CC0 / Public Domain). Used for the
-    Grand Piano instrument. No attribution required, included for
-    transparency.
-
-  - University of Iowa Electronic Music Studios (MIS) samples --
-    Public Domain. Used for the Flute and Trumpet instruments.
-    Source: theremin.music.uiowa.edu
-
-  - VSCO 2 Community Edition -- (c) Versilian Studios / Sam Gossner,
-    distributed under Creative Commons Attribution 4.0 International
-    (CC BY 4.0). Used for the Strings instrument. Source:
-    github.com/sgossner/VSCO-2-CE
+The Software bundles an audio framework and several open-source
+libraries provided by third parties under their own licenses. You
+acknowledge and agree to the following terms.
 
 Audio framework:
-
-  - JUCE 8 -- (c) Raw Material Software Limited. Used under a
-    commercial JUCE license granted to Astrotone Audio.
 
   - VST 3 SDK -- (c) Steinberg Media Technologies GmbH. VST is a
     trademark of Steinberg Media Technologies GmbH, registered in
@@ -154,9 +131,6 @@ Bundled fonts:
   - Fraunces -- (c) Undercase Type, SIL Open Font License 1.1.
   - DM Sans -- (c) Colophon Foundry / Google Fonts, SIL Open
     Font License 1.1.
-
-The bundling of CC BY 4.0 material in the Software does not extend
-the CC BY license to the Software itself, which remains proprietary.
 
 
 6. NO WARRANTY
